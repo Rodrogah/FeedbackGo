@@ -1187,3 +1187,33 @@ body.dark-mode .form-group input:-webkit-autofill:active {
   -webkit-transition: color 9999s ease-out, background-color 9999s ease-out !important;
   -webkit-transition-delay: 9999s !important;
 }
+
+/* ========================================== */
+/* BLINDAGEM ABSOLUTA DA TELA DE LOGIN        */
+/* ========================================== */
+
+/* 1. Garante que o card seja sempre branco, mesmo no Modo Escuro */
+body.dark-mode .login-card {
+  background-color: #ffffff !important;
+  border: none !important;
+}
+
+/* 2. Força os textos (Títulos, parágrafos, labels) a serem azuis escuros */
+body.dark-mode .login-card h1,
+body.dark-mode .login-card p,
+body.dark-mode .login-card label,
+body.dark-mode .login-card span {
+  color: #1e293b !important;
+}
+
+/* 3. Força as caixas de texto (inputs) a serem claras com letras escuras */
+body.dark-mode .login-card input {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* 4. Garante que os links (como "Esqueci a senha") não fiquem brancos */
+body.dark-mode .login-card a {
+  color: var(--color-primary) !important;
+}

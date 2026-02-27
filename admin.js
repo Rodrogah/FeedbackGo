@@ -341,13 +341,13 @@ window.renderAdminCharts = function () {
   }
 };
 
+// ============ SISTEMA DE PAGINAÇÃO (ADMINISTRADOR) ============
+let currentAdminPage = 1;
+let currentAdminFilteredActs = [];
+
 function loadAllActivities() {
-  const el = document.getElementById('adminActivitiesTable');
-  if (!el) return;
-  const lista = activities
-    .filter((a) => a.companyId === currentUser.companyId)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-  el.innerHTML = generateActivityTableHTML(lista, true);
+  currentAdminPage = 1; // Reseta para a página 1 ao abrir o ecrã
+  applyAdminFilters(1); 
 }
 
 function populateAdminFilters(c) {
@@ -366,23 +366,70 @@ function populateAdminFilters(c) {
         .join('');
 }
 
-window.applyAdminFilters = function () {
+window.applyAdminFilters = function (page = 1) {
+  currentAdminPage = page;
+  
   const t = document.getElementById('admFilterTeam').value;
   const uId = document.getElementById('adminFilterUser').value;
   const s = document.getElementById('adminFilterStartDate').value;
+  
   let f = activities.filter((a) => a.companyId === currentUser.companyId);
+  
   if (uId) f = f.filter((a) => a.userId === parseInt(uId));
   if (s) f = f.filter((a) => a.date >= s);
   if (t) {
     const tUs = users.filter((u) => u.team === t).map((u) => u.id);
     f = f.filter((a) => tUs.includes(a.userId));
   }
+  
+  // Ordena SEMPRE do mais novo para o mais antigo, com desempate por hora exata
+  currentAdminFilteredActs = f.sort((a, b) => {
+    const diffData = new Date(b.date) - new Date(a.date);
+    // Se a data for exatamente igual, desempata pelo relógio interno (createdAt)
+    if (diffData === 0 && a.createdAt && b.createdAt) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    return diffData;
+  });
+
+  // 👇 ESTA LINHA FALTAVA: Atualiza o visual da tabela do Admin!
+  renderAdminHistoryPage();
+};
+
+window.renderAdminHistoryPage = function() {
   const el = document.getElementById('adminActivitiesTable');
-  if (el)
-    el.innerHTML = generateActivityTableHTML(
-      f.sort((a, b) => new Date(b.date) - new Date(a.date)),
-      true
-    );
+  if (!el) return;
+
+  const itemsPerPage = 20; // 20 Itens por página
+  const totalPages = Math.ceil(currentAdminFilteredActs.length / itemsPerPage) || 1;
+  
+  if (currentAdminPage > totalPages) currentAdminPage = totalPages;
+  if (currentAdminPage < 1) currentAdminPage = 1;
+
+  // Fatiar a lista para pegar apenas os 20 da página atual
+  const start = (currentAdminPage - 1) * itemsPerPage;
+  const actsPage = currentAdminFilteredActs.slice(start, start + itemsPerPage);
+
+  // Gerar a tabela com a "fatia"
+  let html = generateActivityTableHTML(actsPage, true);
+
+  // Adicionar controlos de paginação no final da tabela
+  if (totalPages > 1) {
+      html += `
+      <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 25px; padding: 10px;">
+          <button class="btn btn-secondary btn-small" onclick="applyAdminFilters(${currentAdminPage - 1})" ${currentAdminPage === 1 ? 'disabled' : ''}>
+              <i class="fa-solid fa-chevron-left"></i> Anterior
+          </button>
+          <span style="font-size: 14px; font-weight: bold; color: var(--color-text-secondary);">
+              Página ${currentAdminPage} de ${totalPages}
+          </span>
+          <button class="btn btn-secondary btn-small" onclick="applyAdminFilters(${currentAdminPage + 1})" ${currentAdminPage === totalPages ? 'disabled' : ''}>
+              Próxima <i class="fa-solid fa-chevron-right"></i>
+          </button>
+      </div>`;
+  }
+  
+  el.innerHTML = html;
 };
 
 function loadUsersTable() {

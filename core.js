@@ -599,3 +599,50 @@ window.runAutoCleanup = function () {
     console.log('[Robô] Nenhuma atividade antiga encontrada para limpar.');
   }
 };
+
+// ============ MODAL DE ANEXOS (SUPORTE A MÚLTIPLOS) ============
+window.openAttachmentModal = function (activityId) {
+  const atividade = activities.find((x) => x.id === activityId);
+  if (!atividade) return;
+
+  const content = document.getElementById('attachmentContent');
+  let html = `<i class="fa-solid fa-folder-open" style="font-size: 48px; color: var(--color-info); margin-bottom: 15px;"></i>`;
+
+  // Se for a versão nova (com até 3 anexos)
+  if (atividade.attachments && atividade.attachments.length > 0) {
+    html += `<p style="margin-bottom: 20px; font-size: 14px;">Esta atividade contém <strong>${atividade.attachments.length} anexo(s)</strong>:</p>
+               <div style="display: flex; flex-direction: column; gap: 10px;">`;
+
+    atividade.attachments.forEach((anexo) => {
+      const isBase64 = anexo.url.startsWith('data:');
+      const actionAttr = isBase64
+        ? `download="${anexo.name}"`
+        : 'target="_blank"';
+      html += `<a href="${anexo.url}" ${actionAttr} class="btn btn-info" style="display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                      <span style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${anexo.name}</span> 
+                      <i class="fa-solid fa-download"></i>
+                   </a>`;
+    });
+    html += `</div>`;
+  }
+  // Se for uma atividade antiga (com apenas 1 anexo)
+  else if (atividade.attachmentUrl) {
+    const isBase64 = atividade.attachmentUrl.startsWith('data:');
+    const actionAttr = isBase64
+      ? `download="${atividade.attachmentName || 'Anexo'}"`
+      : 'target="_blank"';
+    html += `<p style="margin-bottom: 20px; font-size: 14px;">Arquivo: <strong style="color: var(--color-text-primary);">${
+      atividade.attachmentName || 'Anexo'
+    }</strong></p>
+               <a href="${
+                 atividade.attachmentUrl
+               }" ${actionAttr} class="btn btn-info"><i class="fa-solid fa-download"></i> Baixar Anexo</a>`;
+  }
+
+  content.innerHTML = html;
+  document.getElementById('attachmentModal').classList.remove('hidden');
+};
+
+window.closeAttachmentModal = function () {
+  document.getElementById('attachmentModal').classList.add('hidden');
+};

@@ -108,14 +108,81 @@ function loadEmployeeRecentTasks() {
   el.innerHTML = generateActivityTableHTML(lista, false);
 }
 
+// ============ SISTEMA DE PAGINAÇÃO (FUNCIONÁRIO) ============
+let currentEmpPage = 1;
+let currentEmpFilteredActs = [];
+
 function loadEmployeeHistory() {
+  currentEmpPage = 1;
+  // Limpa os filtros de data ao abrir a aba
+  const elStart = document.getElementById('empFilterStart');
+  const elEnd = document.getElementById('empFilterEnd');
+  if (elStart) elStart.value = '';
+  if (elEnd) elEnd.value = '';
+  
+  applyEmployeeFilters(1);
+}
+
+window.applyEmployeeFilters = function(page = 1) {
+  currentEmpPage = page;
+  
+  const s = document.getElementById('empFilterStart') ? document.getElementById('empFilterStart').value : '';
+  const e = document.getElementById('empFilterEnd') ? document.getElementById('empFilterEnd').value : '';
+  
+  let f = activities.filter((a) => a.userId === currentUser.id);
+
+  if (s) f = f.filter((a) => a.date >= s);
+  if (e) f = f.filter((a) => a.date <= e);
+
+  // Ordena do mais novo para o mais antigo, com desempate por hora exata
+  currentEmpFilteredActs = f.sort((a, b) => {
+    const diffData = new Date(b.date) - new Date(a.date);
+    // Se a data for exatamente igual, desempata pelo relógio interno (createdAt)
+    if (diffData === 0 && a.createdAt && b.createdAt) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    return diffData;
+  });
+
+  //atualiza o visual da tabela após ordenar!
+  renderEmployeeHistoryPage();
+};
+
+window.renderEmployeeHistoryPage = function() {
   const el = document.getElementById('employeeHistoryTable');
   if (!el) return;
-  const lista = activities
-    .filter((a) => a.userId === currentUser.id)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-  el.innerHTML = generateActivityTableHTML(lista, false);
-}
+
+  const itemsPerPage = 20; // 20 Itens por página
+  const totalPages = Math.ceil(currentEmpFilteredActs.length / itemsPerPage) || 1;
+  
+  if (currentEmpPage > totalPages) currentEmpPage = totalPages;
+  if (currentEmpPage < 1) currentEmpPage = 1;
+
+  // Fatiar a lista para pegar apenas os 20 da página atual
+  const start = (currentEmpPage - 1) * itemsPerPage;
+  const actsPage = currentEmpFilteredActs.slice(start, start + itemsPerPage);
+
+  // Gerar a tabela com a "fatia"
+  let html = generateActivityTableHTML(actsPage, false);
+
+  // Adicionar controlos de paginação no final da tabela
+  if (totalPages > 1) {
+      html += `
+      <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 25px; padding: 10px;">
+          <button class="btn btn-secondary btn-small" onclick="applyEmployeeFilters(${currentEmpPage - 1})" ${currentEmpPage === 1 ? 'disabled' : ''}>
+              <i class="fa-solid fa-chevron-left"></i> Anterior
+          </button>
+          <span style="font-size: 14px; font-weight: bold; color: var(--color-text-secondary);">
+              Página ${currentEmpPage} de ${totalPages}
+          </span>
+          <button class="btn btn-secondary btn-small" onclick="applyEmployeeFilters(${currentEmpPage + 1})" ${currentEmpPage === totalPages ? 'disabled' : ''}>
+              Próxima <i class="fa-solid fa-chevron-right"></i>
+          </button>
+      </div>`;
+  }
+  
+  el.innerHTML = html;
+};
 
 function setupNewTaskForm() {
   const form = document.getElementById('newTaskForm');
