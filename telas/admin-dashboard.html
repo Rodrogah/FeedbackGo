@@ -1,0 +1,151 @@
+<div id="adminDashboard">
+  <div
+    class="page-header"
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    "
+  >
+    <div>
+      <h1><i class="fa-solid fa-gauge"></i> Centro de Comando</h1>
+      <p id="adminCurrentDate"></p>
+    </div>
+    <div
+      class="card"
+      style="
+        padding: 6px 16px;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      "
+    >
+      <i
+        class="fa-solid fa-filter"
+        style="color: var(--color-text-secondary)"
+      ></i>
+      <select
+        id="dashFilterTeam"
+        onchange="refreshAdminDashboard()"
+        style="
+          border: none;
+          background: transparent;
+          font-weight: 600;
+          outline: none;
+          cursor: pointer;
+          font-size: 14px;
+          box-shadow: none;
+        "
+      >
+        <option value="">Todas as Equipes</option>
+      </select>
+    </div>
+  </div>
+
+  <div
+    class="stats-grid"
+    style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))"
+  >
+    <div class="stat-card">
+      <div class="value" id="dashTotalActivities">0</div>
+      <div class="label">Total de Registros</div>
+    </div>
+    <div class="stat-card success">
+      <div class="value" id="dashCompletedActivities">0</div>
+      <div class="label">Concluídas</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="value" id="dashPendingActivities">0</div>
+      <div class="label">Pendentes / Em Atraso</div>
+    </div>
+    <div class="stat-card warning">
+      <div class="value" id="dashActiveUsers">0</div>
+      <div class="label">Colaboradores Ativos</div>
+    </div>
+  </div>
+
+  <div class="form-grid" style="margin-bottom: 24px">
+    <div
+      class="card"
+      style="
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      "
+    >
+      <h3 style="width: 100%">
+        <i class="fa-solid fa-chart-pie"></i> Status Geral
+      </h3>
+      <div style="position: relative; height: 260px; width: 100%">
+        <canvas id="adminStatusChart"></canvas>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom: 0">
+      <h3 style="width: 100%">
+        <i class="fa-solid fa-chart-column"></i> Produtividade por Categoria
+      </h3>
+      <div style="position: relative; height: 260px; width: 100%">
+        <canvas id="adminCategoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-grid" style="margin-bottom: 24px">
+    <div class="card" style="margin-bottom: 0">
+      <h3 style="width: 100%">
+        <i class="fa-solid fa-chart-line"></i> Evolução Diária (Últimos 7 Dias)
+      </h3>
+      <div style="position: relative; height: 260px; width: 100%">
+        <canvas id="adminTimelineChart"></canvas>
+      </div>
+    </div>
+
+    <div
+      class="card"
+      style="margin-bottom: 0; display: flex; flex-direction: column"
+    >
+      <h3 style="width: 100%">
+        <i class="fa-solid fa-bullhorn" style="color: #3b82f6"></i> Quadro de
+        Avisos Geral
+      </h3>
+      <p
+        style="
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          margin-bottom: 12px;
+        "
+      >
+        Este recado ficará visível no painel de todos os colaboradores.
+      </p>
+      <textarea
+        id="adminAnnouncementText"
+        placeholder="Escreva aqui um recado importante para toda a empresa..."
+        style="
+          flex-grow: 1;
+          resize: none;
+          min-height: 140px;
+          margin-bottom: 12px;
+        "
+      ></textarea>
+      <button
+        onclick="saveAnnouncement()"
+        id="btnSaveAnnouncement"
+        class="btn btn-small btn-info"
+        style="align-self: flex-end"
+      >
+        <i class="fa-solid fa-paper-plane"></i> Publicar Aviso
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>
+      <i class="fa-solid fa-bolt"></i> Atividades Recentes (Filtro Aplicado)
+    </h3>
+    <div id="adminRecentActivities"></div>
+  </div>
+</div>

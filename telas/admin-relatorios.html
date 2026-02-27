@@ -1,0 +1,33 @@
+<div id="adminReports">
+<div class="page-header">
+    <h1><i class="fa-solid fa-chart-area"></i> Relatórios Gerenciais</h1>
+    <p>Gere visualizações e exporte os dados</p>
+</div>
+<div class="card">
+    <h3><i class="fa-solid fa-calendar-days"></i> Gerar Relatório</h3>
+    <div class="form-grid" style="margin-bottom: 24px;">
+        <div class="form-group">
+            <label>Filtrar por Equipe</label>
+            <select id="reportFilterTeam"><option value="">Todas as Equipes</option></select>
+        </div>
+        <div class="form-group">
+            <label>Filtrar por Colaborador</label>
+            <select id="reportFilterUser"><option value="">Todos os Colaboradores</option></select>
+        </div>
+        <div class="form-group">
+            <label>Data Inicial</label>
+            <input type="date" id="reportStartDate">
+        </div>
+        <div class="form-group">
+            <label>Data Final</label>
+            <input type="date" id="reportEndDate">
+        </div>
+    </div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button onclick="generateReport()" class="btn btn-small"><i class="fa-solid fa-magnifying-glass"></i> Ver no Ecrã</button>
+        <button onclick="downloadReportExcel()" class="btn btn-small btn-success"><i class="fa-solid fa-file-excel"></i> Exportar para Excel</button>
+        <button onclick="sendFilteredReportEmail(event)" class="btn btn-small btn-info"><i class="fa-solid fa-envelope-open-text"></i> Enviar Relatório Selecionado</button>
+    </div>
+    <div id="periodReport" style="margin-top: 30px;"></div>
+</div>
+</div>

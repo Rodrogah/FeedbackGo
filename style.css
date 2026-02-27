@@ -1,0 +1,1189 @@
+:root {
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #ffffff;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+  --color-border: #e2e8f0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ============ BOTÕES ============ */
+.btn {
+  padding: 12px 20px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.btn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.btn-small {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.btn-secondary {
+  background: var(--color-text-secondary);
+}
+
+.btn-secondary:hover {
+  background: #475569;
+}
+
+.btn-danger {
+  background: var(--color-danger);
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-info {
+  background: var(--color-info);
+}
+
+.btn-info:hover {
+  background: #2563eb;
+}
+
+.btn-success {
+  background: var(--color-success);
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+.btn-icon-only {
+  padding: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+  transition: 0.2s;
+}
+
+.btn-icon-only:hover {
+  background: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.btn-icon-only.edit:hover {
+  color: var(--color-info);
+}
+
+.btn-icon-only.delete:hover {
+  color: var(--color-danger);
+}
+
+/* ============ CARDS E FORMULÁRIOS ============ */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.card h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--color-text-primary);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert-success {
+  background: #dcfce7;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.alert-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* ============ LOGIN E RECUPERAÇÃO ============ */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #10b981 100%);
+  padding: 20px;
+}
+
+.login-card {
+  background: white;
+  padding: 48px 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 420px;
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logo-icon {
+  width: 64px;
+  height: 64px;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-primary);
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+.logo h1 {
+  font-size: 24px;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+}
+
+.logo p {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* ============ LAYOUT PRINCIPAL (APP) ============ */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 24px 20px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.sidebar-logo h2 {
+  color: white;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-logo h2 i {
+  color: var(--color-primary);
+}
+
+.sidebar-logo p {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  transition: 0.2s;
+}
+
+.nav-item i {
+  width: 16px;
+  text-align: center;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-primary);
+}
+
+.sidebar-footer {
+  padding: 16px 12px;
+  border-top: 1px solid #1e293b;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.user-details .name {
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.user-details .role {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.btn-logout:hover {
+  background: var(--color-danger);
+  color: white;
+}
+
+.main-content {
+  margin-left: 260px;
+  flex: 1;
+  padding: 32px;
+  min-height: 100vh;
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-header p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+/* ============ ESTATÍSTICAS E TABELAS ============ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid var(--color-primary);
+}
+
+.stat-card.success {
+  border-left-color: var(--color-success);
+}
+.stat-card.warning {
+  border-left-color: var(--color-warning);
+}
+.stat-card.danger {
+  border-left-color: var(--color-danger);
+}
+
+.stat-card .value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.stat-card .label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  text-align: left;
+  padding: 12px;
+  background: #f8fafc;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid var(--color-border);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover {
+  background: #f8fafc;
+}
+
+/* ============ BADGES (ETIQUETAS) ============ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-pendente {
+  background: #fef3c7;
+  color: #d97706;
+}
+.badge-andamento {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.badge-concluido {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+/* ============ FILTROS E ESTADOS VAZIOS ============ */
+.filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
+
+.filters .form-group {
+  margin-bottom: 0;
+  min-width: 180px;
+  flex: 1;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-secondary);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--color-border);
+}
+
+/* ============ MODAL ============ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--color-bg-secondary); /* Agora ele segue o fundo do tema */
+  width: 100%;
+  max-width: 500px;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+/* Força o Modal a ficar escuro quando o Modo Escuro estiver ativo */
+body.dark-mode .modal-content {
+  background-color: #1e293b !important;
+  border: 1px solid #334155;
+}
+
+/* Garante que os títulos do modal fiquem visíveis */
+body.dark-mode .modal-header h2 {
+  color: #f8fafc !important;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.close-modal:hover {
+  color: var(--color-danger);
+}
+
+/* ============ RESPONSIVO ============ */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    position: relative;
+    height: auto;
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* ============ ETIQUETAS DE STATUS (CORES VIVAS PARA OS 2 MODOS) ============ */
+.badge,
+span[style*='background:#E2E8F0'],
+span[style*='background:#EDE9FE'] {
+  font-weight: 800 !important;
+  padding: 6px 14px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.badge-concluido {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+  border: 1px solid #22c55e !important;
+}
+.badge-andamento {
+  background-color: #fef9c3 !important;
+  color: #854d0e !important;
+  border: 1px solid #eab308 !important;
+}
+.badge-pendente {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+  border: 1px solid #ef4444 !important;
+}
+
+/* ============ MODO NOTURNO (DARK MODE) - REFINADO E CORRIGIDO ============ */
+
+/* 1. Fundo Geral */
+body.dark-mode {
+  background-color: #0f172a !important;
+  color: #cbd5e1 !important;
+}
+
+/* 2. CAÇADOR DE CAIXAS (Sem Destruir o Layout Novo) */
+body.dark-mode .sidebar,
+body.dark-mode .table-container,
+body.dark-mode .login-box,
+body.dark-mode .card,
+body.dark-mode .settings-card {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 3. ESTATÍSTICAS DO DASHBOARD (Mantendo a linha colorida na esquerda) */
+body.dark-mode .stat-card {
+  background-color: #1e293b !important;
+  border-top: 1px solid #334155 !important;
+  border-right: 1px solid #334155 !important;
+  border-bottom: 1px solid #334155 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 4. LISTAS DO JAVASCRIPT (Apenas Equipes) */
+body.dark-mode #teamsList li {
+  background-color: #0f172a !important;
+  border: 1px solid #334155 !important;
+  color: #f8fafc !important;
+}
+
+/* 5. RESGATE DOS TEXTOS */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode strong,
+body.dark-mode label,
+body.dark-mode .stat-card .value {
+  color: #f8fafc !important;
+}
+body.dark-mode p,
+body.dark-mode .text-muted,
+body.dark-mode .stat-card .label {
+  color: #94a3b8 !important;
+}
+
+/* 6. TABELAS */
+body.dark-mode table th {
+  background-color: #0f172a !important;
+  color: #94a3b8 !important;
+  border-bottom: 2px solid #334155 !important;
+}
+body.dark-mode table td {
+  background-color: transparent !important;
+  border-bottom: 1px solid #334155 !important;
+  color: #e2e8f0 !important;
+}
+body.dark-mode table tr:hover td {
+  background-color: #334155 !important;
+}
+
+/* ============ REFORÇO DE LEGIBILIDADE (MODO ESCURO) ============ */
+
+body.dark-mode select,
+body.dark-mode select option {
+  background-color: #1e293b !important; /* Fundo azul escuro profundo */
+  color: #ffffff !important; /* Texto branco puro para contraste máximo */
+}
+
+/* Melhora o aspeto visual dos campos de texto */
+body.dark-mode input,
+body.dark-mode textarea {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Ajuste para as listas suspensas (Dropdowns) que aparecem brancas em alguns browsers */
+body.dark-mode select:focus {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Correção para o "clipe" e nomes de ficheiros no Modo Escuro */
+body.dark-mode .custom-file-item {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+/* Garante que o texto dentro dos botões de ação nos modais seja legível */
+body.dark-mode .modal-content .btn-secondary {
+  background-color: #475569 !important;
+  color: #f8fafc !important;
+}
+
+/* 7. INPUTS */
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #475569 !important;
+  border-radius: 6px;
+}
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  border-color: #10b981 !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* 8. ETIQUETAS (NEON) */
+body.dark-mode .badge-concluido {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+body.dark-mode .badge-andamento {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+  color: #fde047 !important;
+  border-color: rgba(234, 179, 8, 0.3) !important;
+}
+body.dark-mode .badge-pendente {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+body.dark-mode span[style*='background:#E2E8F0'] {
+  background-color: rgba(56, 189, 248, 0.15) !important;
+  color: #7dd3fc !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+body.dark-mode span[style*='background:#EDE9FE'] {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+  color: #d8b4fe !important;
+  border-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+/* ============ LAYOUT DE CONFIGURAÇÕES (RESOLVIDO) ============ */
+
+#adminSettings:not(.hidden),
+#employeeSettings:not(.hidden) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  width: 100%;
+  padding: 30px !important;
+}
+
+/* Quando o JS esconde, esconde mesmo! */
+#adminSettings.hidden,
+#employeeSettings.hidden {
+  display: none !important;
+}
+
+#adminSettings .section-header,
+#employeeSettings .section-header {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 15px;
+}
+body.dark-mode #adminSettings .section-header,
+body.dark-mode #employeeSettings .section-header {
+  border-bottom: 1px solid #334155 !important;
+}
+
+/* FORÇAR A TRANSPARÊNCIA NAS CAIXAS ESTRUTURAIS */
+#adminSettings.app-container,
+#employeeSettings.app-container,
+.settings-layout-grid,
+.settings-nav-list,
+.settings-content-area,
+.centered-content-box,
+body.dark-mode #adminSettings,
+body.dark-mode #employeeSettings,
+body.dark-mode .settings-layout-grid,
+body.dark-mode .settings-nav-list,
+body.dark-mode .settings-content-area,
+body.dark-mode .centered-content-box {
+  background-color: transparent !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* GRID E MENU */
+.settings-layout-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 40px;
+  align-items: start;
+  width: 100%;
+}
+
+.settings-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.nav-list-item {
+  text-align: left;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-list-item i {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+.nav-list-item:hover {
+  background-color: #f1f5f9;
+  color: #10b981;
+}
+.nav-list-item.active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+/* OCULTAR ABAS INATIVAS */
+.settings-tab-content:not([style*='display: block']) {
+  display: none !important;
+}
+.settings-tab-content {
+  width: 100%;
+}
+.centered-content-box {
+  max-width: 650px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* MODO ESCURO DO MENU LATERAL */
+body.dark-mode .nav-list-item {
+  color: #94a3b8 !important;
+}
+body.dark-mode .nav-list-item:hover {
+  background-color: #1e293b !important;
+  color: #10b981 !important;
+}
+body.dark-mode .nav-list-item.active {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #10b981 !important;
+}
+
+/* ============ FUSÃO DAS CAIXAS DE CONFIGURAÇÃO (MODO ESCURO) ============ */
+
+/* 1. Remove o fundo, a borda e o preenchimento das caixas internas */
+body.dark-mode #adminSettings .settings-card,
+body.dark-mode #employeeSettings .settings-card {
+  background-color: transparent !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important; /* Remove o padding extra já que não há mais borda */
+  margin-bottom: 35px !important;
+}
+
+/* 2. Mantém apenas uma linha sutil abaixo dos títulos (Meu Perfil, Dados da Empresa, etc.) */
+body.dark-mode #adminSettings .settings-card h3,
+body.dark-mode #employeeSettings .settings-card h3 {
+  border-bottom: 1px solid #334155 !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 20px !important;
+}
+
+body.dark-mode .theme-toggle-card {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding-left: 0 !important; /* Tira o recuo para alinhar com o título */
+  padding-right: 0 !important;
+}
+
+/* ============ PALETA DE CORES TRANSLÚCIDAS E COM BORDA ============ */
+.cat-badge-dynamic {
+  background-color: hsla(var(--cat-hue), 85%, 45%, 0.15) !important;
+  /* AQUI ESTÁ A MÁGICA: A luminosidade da letra agora é uma variável (--txt-l) */
+  color: hsl(var(--cat-hue), 85%, var(--txt-l, 35%)) !important;
+  border: 1px solid hsla(var(--cat-hue), 85%, 45%, 0.4) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* MODO ESCURO (Efeito Neon Transparente) */
+body.dark-mode .cat-badge-dynamic {
+  background-color: hsla(var(--cat-hue), 80%, 60%, 0.15) !important;
+  color: hsl(var(--cat-hue), 90%, 75%) !important;
+  border: 1px solid hsla(var(--cat-hue), 80%, 60%, 0.4) !important;
+}
+
+/* ============ SISTEMA DE NOTIFICAÇÕES (TOASTS) ============ */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toast {
+  min-width: 280px;
+  background: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateX(120%);
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border-left: 6px solid #10b981;
+}
+
+.toast.show {
+  transform: translateX(0);
+}
+.toast.error {
+  border-left-color: #ef4444;
+}
+.toast i {
+  font-size: 20px;
+}
+.toast-message {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+body.dark-mode .toast {
+  background: #1e293b;
+  color: #f8fafc;
+  border-left-width: 8px;
+}
+body.dark-mode .toast-message {
+  color: #f8fafc;
+}
+
+/* ============ TIMELINE DE LOGS (HISTÓRICO) ============ */
+.logs-section {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 2px dashed #e2e8f0;
+}
+body.dark-mode .logs-section {
+  border-top-color: #334155;
+}
+
+.log-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.log-dot {
+  width: 8px;
+  height: 8px;
+  background: #cbd5e1;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.log-content {
+  color: #64748b;
+}
+body.dark-mode .log-content {
+  color: #94a3b8;
+}
+.log-time {
+  font-weight: bold;
+  color: #1e293b;
+}
+body.dark-mode .log-time {
+  color: #f8fafc;
+}
+/* style.css - Adicionar no final */
+
+/* ========================================= */
+/* VISUAL DO MODAL DE ANEXOS                 */
+/* ========================================= */
+
+/* 1. Modo Claro (Padrão): Fundo 100% Branco e sólido */
+#attachmentModal .modal-content {
+  background-color: #ffffff;
+  border: none;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* 2. Modo Escuro: Fundo com a cor do bloco escuro */
+body.dark-mode #attachmentModal .modal-content {
+  background-color: var(--color-card-bg);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+/* Remove a linha divisória do cabeçalho do modal */
+#attachmentModal .modal-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* ========================================= */
+/* ZONA DE UPLOAD DE ARQUIVOS MODERNA        */
+/* ========================================= */
+.file-drop-area {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 20px;
+  border: 2px dashed var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-bg-primary);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.file-drop-area:hover {
+  border-color: var(--color-info);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.file-drop-area .fake-btn {
+  background-color: var(--color-info);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.file-drop-area .file-msg {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.file-drop-area input[type='file'] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  cursor: pointer;
+  opacity: 0; /* Esconde o input feio, mas mantém-no clicável */
+}
+
+/* Lista de arquivos selecionados */
+.custom-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.custom-file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+
+/* ========================================= */
+/* AJUSTE DE CORES (MODO ESCURO E CLARO)     */
+/* ========================================= */
+
+/* 1. Ajuste do campo Título e outros Inputs */
+.form-group input[type='text'],
+.form-group input[type='date'],
+.form-group select {
+  background-color: var(--color-bg-primary, transparent);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+/* 2. Forçar cores corretas no Modo Escuro */
+body.dark-mode .form-group input[type='text'],
+body.dark-mode .form-group input[type='date'],
+body.dark-mode .form-group select,
+body.dark-mode .file-drop-area,
+body.dark-mode .custom-file-item {
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.2
+  ); /* Fundo escuro e levemente transparente */
+  border-color: #334155; /* Borda sutil do modo escuro */
+  color: #f8fafc; /* Texto claro */
+}
+
+/* 3. Efeito de Hover da Zona de Anexos no Modo Escuro */
+body.dark-mode .file-drop-area:hover {
+  border-color: var(--color-info);
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* 4. Cor do texto secundário (ex: "ou arraste e solte aqui") no Modo Escuro */
+body.dark-mode .file-drop-area .file-msg {
+  color: #94a3b8;
+}
+
+/* ========================================= */
+/* BLOQUEIO DO FUNDO BRANCO (AUTOFILL/FOCUS) */
+/* ========================================= */
+
+/* 1. Mantém a cor escura quando você clica dentro do campo para digitar */
+body.dark-mode .form-group input[type='text']:focus,
+body.dark-mode .form-group input[type='date']:focus,
+body.dark-mode .form-group select:focus {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  color: #f8fafc !important;
+  outline: none;
+  border-color: var(--color-info); /* Deixa a borda azul ao clicar */
+}
+
+/* 2. O truque mágico para anular o fundo branco do "Preenchimento Automático" do Chrome */
+body.dark-mode .form-group input:-webkit-autofill,
+body.dark-mode .form-group input:-webkit-autofill:hover,
+body.dark-mode .form-group input:-webkit-autofill:focus,
+body.dark-mode .form-group input:-webkit-autofill:active {
+  -webkit-transition: color 9999s ease-out, background-color 9999s ease-out !important;
+  -webkit-transition-delay: 9999s !important;
+}

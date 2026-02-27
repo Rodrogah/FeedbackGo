@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FeedbackGo - Plataforma Empresarial</title>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"
+    ></script>
+
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"
+    ></script>
+    <script type="text/javascript">
+      (function () {
+        // Chave do Rodrigo
+        emailjs.init('IF5hubbrNsxc_m7Qx');
+      })();
+    </script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="editModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fa-solid fa-pen-to-square"></i> Editar Atividade</h2>
+          <button class="close-modal" onclick="closeEditModal()">
+            &times;
+          </button>
+        </div>
+        <form id="editTaskForm">
+          <input type="hidden" id="editTaskId" />
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Data</label
+              ><input type="date" id="editTaskDate" required />
+            </div>
+            <div class="form-group">
+              <label>Categoria</label
+              ><select id="editTaskCategory"></select>
+            </div>
+            <div class="form-group full-width">
+              <label>Título</label
+              ><input type="text" id="editTaskTitle" required />
+            </div>
+            <div class="form-group full-width">
+              <label>Descrição</label
+              ><textarea id="editTaskDescription"></textarea>
+            </div>
+            <div class="form-group full-width">
+              <label>Status</label>
+              <select id="editTaskStatus">
+                <option value="concluido">Concluído</option>
+                <option value="andamento">Em Andamento</option>
+                <option value="pendente">Pendente</option>
+              </select>
+            </div>
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: flex-end;
+              gap: 10px;
+              margin-top: 25px;
+            "
+          >
+            <button
+              type="button"
+              class="btn btn-secondary btn-small"
+              onclick="closeEditModal()"
+            >
+              Cancelar
+            </button>
+            <button type="submit" id="btnSaveEdit" class="btn btn-small">
+              <i class="fa-solid fa-floppy-disk"></i> Guardar Alterações
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="historyModal" class="modal-overlay hidden">
+      <div class="modal-content" style="max-width: 420px">
+        <div class="modal-header">
+          <h2><i class="fa-solid fa-history"></i> Histórico da Tarefa</h2>
+          <button class="close-modal" onclick="closeHistoryModal()">
+            &times;
+          </button>
+        </div>
+        <div
+          id="historyContent"
+          class="logs-section"
+          style="border: none; margin-top: 0"
+        ></div>
+        <div style="margin-top: 20px; text-align: right">
+          <button
+            class="btn btn-secondary btn-small"
+            onclick="closeHistoryModal()"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="attachmentModal" class="modal-overlay hidden">
+      <div class="modal-content" style="max-width: 400px; text-align: center">
+        <div class="modal-header">
+          <h2><i class="fa-solid fa-paperclip"></i> Anexos da Atividade</h2>
+          <button class="close-modal" onclick="closeAttachmentModal()">
+            &times;
+          </button>
+        </div>
+        <div
+          id="attachmentContent"
+          style="
+            margin-top: 20px;
+            padding: 20px;
+            background: transparent;
+            border: none;
+          "
+        ></div>
+      </div>
+    </div>
+
+    <div id="editUserModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fa-solid fa-user-pen"></i> Editar Colaborador</h2>
+          <button class="close-modal" onclick="closeEditUserModal()">
+            &times;
+          </button>
+        </div>
+        <form id="editUserForm">
+          <input type="hidden" id="editUserId" />
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Nome Completo</label>
+              <input type="text" id="editUserName" required />
+            </div>
+            <div class="form-group">
+              <label>Nível de Acesso</label>
+              <select id="editUserRole">
+                <option value="funcionario">Funcionário</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Equipe / Departamento</label>
+              <select id="editUserTeam"></select>
+            </div>
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: flex-end;
+              gap: 10px;
+              margin-top: 20px;
+            "
+          >
+            <button
+              type="button"
+              class="btn btn-secondary btn-small"
+              onclick="closeEditUserModal()"
+            >
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-small">
+              <i class="fa-solid fa-floppy-disk"></i> Guardar Alterações
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="registerScreen" class="login-container hidden">
+      <div class="login-card">
+        <div class="logo">
+          <div class="logo-icon">
+            <i class="fa-solid fa-building-circle-check"></i>
+          </div>
+          <h1>Nova Empresa</h1>
+          <p>FeedbackGo - Crie o seu ambiente</p>
+        </div>
+        <div id="registerAlert" class="alert hidden"></div>
+        <form id="registerForm">
+          <div class="form-group">
+            <label>Nome da Empresa</label>
+            <input
+              type="text"
+              id="companyName"
+              placeholder="Ex: TechCorp"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>O Seu Nome (Administrador)</label>
+            <input
+              type="text"
+              id="adminName"
+              placeholder="Nome completo"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>E-mail Corporativo</label>
+            <input
+              type="email"
+              id="adminEmail"
+              placeholder="admin@empresa.com"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>Palavra-passe</label>
+            <input
+              type="password"
+              id="adminPassword"
+              placeholder="••••••••"
+              required
+              minlength="6"
+            />
+          </div>
+          <button type="submit" id="registerBtn" class="btn">
+            Registrar Empresa
+          </button>
+        </form>
+        <div style="text-align: center; margin-top: 20px">
+          <a
+            href="#"
+            onclick="showLoginScreen(); return false;"
+            style="
+              color: var(--color-primary);
+              text-decoration: none;
+              font-size: 14px;
+              font-weight: 600;
+            "
+          >
+            <i class="fa-solid fa-arrow-left"></i> Voltar para o Login
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div id="loginScreen" class="login-container">
+      <div class="login-card">
+        <div class="logo">
+          <div class="logo-icon"><i class="fa-solid fa-paper-plane"></i></div>
+          <h1>FeedbackGo</h1>
+          <p>Faça login para acessar o painel</p>
+        </div>
+
+        <div id="loginAlert" class="alert hidden"></div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label>E-mail Corporativo</label>
+            <input
+              type="email"
+              id="loginEmail"
+              placeholder="exemplo@suaempresa.com"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label style="display: flex; justify-content: space-between">
+              Palavra-passe
+              <a
+                href="#"
+                onclick="showRecoverScreen()"
+                style="
+                  color: var(--color-primary);
+                  text-decoration: none;
+                  font-weight: bold;
+                  font-size: 12px;
+                "
+                >Esqueci a senha</a
+              >
+            </label>
+            <input
+              type="password"
+              id="loginPassword"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <button type="submit" id="loginBtn" class="btn">
+            <i class="fa-solid fa-right-to-bracket"></i> Entrar na Plataforma
+          </button>
+        </form>
+
+        <div
+          style="
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #64748b;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
+          "
+        >
+          A sua empresa ainda não usa o FeedbackGo? <br />
+          <a
+            href="#"
+            onclick="showRegisterScreen()"
+            style="
+              color: var(--color-primary);
+              font-weight: bold;
+              text-decoration: none;
+              display: inline-block;
+              margin-top: 5px;
+            "
+            >Registrar Nova Empresa</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <div id="recoverScreen" class="login-container hidden">
+      <div class="login-card">
+        <div class="logo">
+          <div class="logo-icon">
+            <i class="fa-solid fa-unlock-keyhole"></i>
+          </div>
+          <h1>Recuperar Conta</h1>
+          <p>Vamos gerar uma nova senha temporária</p>
+        </div>
+        <div id="recoverAlert" class="alert hidden"></div>
+        <form id="recoverForm">
+          <div class="form-group">
+            <label>Seu e-mail cadastrado</label>
+            <input
+              type="email"
+              id="recoverEmail"
+              placeholder="seu@email.com"
+              required
+            />
+          </div>
+          <button type="submit" class="btn">
+            <i class="fa-solid fa-paper-plane"></i> Enviar Nova Senha
+          </button>
+        </form>
+        <div style="text-align: center; margin-top: 20px">
+          <a
+            href="#"
+            onclick="showLoginScreen(); return false;"
+            style="
+              color: var(--color-primary);
+              text-decoration: none;
+              font-size: 14px;
+              font-weight: 600;
+            "
+          >
+            <i class="fa-solid fa-arrow-left"></i> Voltar para o Login
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div id="employeePanel" class="app-container hidden">
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <h2><i class="fa-solid fa-paper-plane"></i> FeedbackGo</h2>
+          <p id="empCompanySidebar"></p>
+        </div>
+        <nav class="sidebar-nav">
+          <a class="nav-item active" onclick="showEmployeeSection('dashboard')"
+            ><i class="fa-solid fa-chart-pie"></i> Dashboard</a
+          >
+          <a class="nav-item" onclick="showEmployeeSection('new-task')"
+            ><i class="fa-solid fa-plus"></i> Nova Atividade</a
+          >
+          <a class="nav-item" onclick="showEmployeeSection('history')"
+            ><i class="fa-solid fa-clock-rotate-left"></i> Meu Histórico</a
+          >
+          <a class="nav-item" onclick="showEmployeeSection('settings')"
+            ><i class="fa-solid fa-gear"></i> Minhas Configurações</a
+          >
+        </nav>
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <div class="user-avatar" id="employeeAvatar"></div>
+            <div class="user-details">
+              <div class="name" id="sidebarEmployeeName"></div>
+              <div class="role" id="employeeTeamName"></div>
+            </div>
+          </div>
+          <button onclick="logout()" class="btn-logout">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <div id="funcConteudoDinamico"></div>
+      </main>
+    </div>
+    <div id="adminPanel" class="app-container hidden">
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <h2><i class="fa-solid fa-paper-plane"></i> FeedbackGo</h2>
+          <p id="admCompanySidebar"></p>
+        </div>
+        <nav class="sidebar-nav">
+          <a class="nav-item active" onclick="showAdminSection('dashboard')"
+            ><i class="fa-solid fa-chart-pie"></i> Dashboard</a
+          >
+          <a class="nav-item" onclick="showAdminSection('new-task')"
+            ><i class="fa-solid fa-plus"></i> Nova Atividade</a
+          >
+          <a class="nav-item" onclick="showAdminSection('all-activities')"
+            ><i class="fa-solid fa-list-check"></i> Histórico</a
+          >
+          <a class="nav-item" onclick="showAdminSection('users')"
+            ><i class="fa-solid fa-users"></i> Colaboradores</a
+          >
+          <a class="nav-item" onclick="showAdminSection('teams')"
+            ><i class="fa-solid fa-people-group"></i> Equipes</a
+          >
+          <a class="nav-item" onclick="showAdminSection('reports')"
+            ><i class="fa-solid fa-chart-line"></i> Relatórios</a
+          >
+          <a class="nav-item" onclick="showAdminSection('settings')"
+            ><i class="fa-solid fa-gear"></i> Configurações</a
+          >
+        </nav>
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <div class="user-avatar" id="adminAvatar"></div>
+            <div class="user-details">
+              <div class="name" id="sidebarAdminName"></div>
+              <div class="role">Administrador</div>
+            </div>
+          </div>
+          <button onclick="logout()" class="btn-logout">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <div id="adminGlobalAlert" class="alert hidden"></div>
+        <div id="adminConteudoDinamico"></div>
+      </main>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay hidden" style="z-index: 10000">
+      <div
+        class="modal-content"
+        style="max-width: 380px; text-align: center; padding: 30px 20px"
+      >
+        <div
+          style="
+            font-size: 48px;
+            color: var(--color-warning);
+            margin-bottom: 16px;
+          "
+        >
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 id="confirmTitle" style="margin-bottom: 10px; font-size: 18px">
+          Atenção
+        </h3>
+        <p
+          id="confirmMessage"
+          style="
+            color: var(--color-text-secondary);
+            margin-bottom: 24px;
+            font-size: 14px;
+          "
+        ></p>
+        <div style="display: flex; justify-content: center; gap: 12px">
+          <button
+            class="btn btn-secondary btn-small"
+            onclick="closeConfirmModal()"
+          >
+            Cancelar
+          </button>
+          <button
+            id="confirmActionBtn"
+            class="btn btn-danger btn-small"
+            onclick="executeConfirmAction()"
+          >
+            Sim, Apagar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="core.js"></script>
+    <script src="auth.js"></script>
+    <script src="funcionario.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+<div id="adminAllActivities">
+<div class="page-header">
+    <h1><i class="fa-solid fa-list"></i> Gestão de Atividades</h1>
+    <p>Histórico completo da empresa</p>
+</div>
+<div class="card">
+    <div class="filters">
+        <div class="form-group">
+            <label>Equipe</label>
+            <select id="admFilterTeam"><option value="">Todas as Equipes</option></select>
+        </div>
+        <div class="form-group">
+            <label>Funcionário</label>
+            <select id="adminFilterUser"><option value="">Todos os Colaboradores</option></select>
+        </div>
+        <div class="form-group">
+            <label>Data Inicial</label>
+            <input type="date" id="adminFilterStartDate">
+        </div>
+        <div class="form-group">
+            <button onclick="applyAdminFilters()" class="btn btn-small btn-secondary"><i class="fa-solid fa-filter"></i> Pesquisar</button>
+        </div>
+    </div>
+    <div id="adminActivitiesTable"></div>
+</div>
+</div>

@@ -1,0 +1,50 @@
+<div id="employeeNewTask">
+<div class="page-header">
+    <h1><i class="fa-solid fa-file-circle-plus"></i> Registrar Nova Atividade</h1>
+    <p>Preencha os detalhes da atividade</p>
+</div>
+<div class="card">
+    <form id="newTaskForm">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Data</label>
+                <input type="date" id="taskDate" required>
+            </div>
+            <div class="form-group">
+                <label>Categoria</label>
+                <select id="taskCategory"></select>
+            </div>
+            <div class="form-group full-width">
+                <label>Título da Atividade</label>
+                <input type="text" id="taskTitle" placeholder="Ex: Reunião de Alinhamento" required>
+            </div>
+            <div class="form-group full-width">
+                <label>Descrição Detalhada</label>
+                <textarea id="taskDescription" placeholder="O que foi realizado..."></textarea>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label><i class="fa-solid fa-paperclip"></i> Anexos (Opcional - Máx. 3 arquivos)</label>
+                
+                <div class="file-drop-area">
+                    <span class="fake-btn">Escolher arquivos</span>
+                    <span class="file-msg">ou arraste e solte aqui</span>
+                    <input class="file-input" type="file" id="taskAttachment" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+                </div>
+                
+                <div id="fileListDisplay" class="custom-file-list"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Status</label>
+                <select id="taskStatus">
+                    <option value="concluido">Concluído</option>
+                    <option value="andamento">Em Andamento</option>
+                    <option value="pendente">Pendente</option>
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-small" style="margin-top: 16px;"><i class="fa-solid fa-cloud-arrow-up"></i> Guardar na Nuvem</button>
+    </form>
+</div>
+</div>

@@ -1,0 +1,105 @@
+<div id="employeeSettings" class="app-container">
+  <div class="section-header">
+    <h2><i class="fa-solid fa-gear"></i> Minhas Configurações</h2>
+    <p>Gerencie o seu perfil e preferências.</p>
+  </div>
+
+  <div class="settings-layout-grid">
+    <div class="settings-nav-list">
+      <button
+        type="button"
+        class="nav-list-item active"
+        onclick="openSettingsTab('tabFuncPerfil', this)"
+      >
+        <i class="fa-solid fa-user"></i> Meu Perfil
+      </button>
+      <button
+        type="button"
+        class="nav-list-item"
+        onclick="openSettingsTab('tabFuncAparencia', this)"
+      >
+        <i class="fa-solid fa-display"></i> Aparência
+      </button>
+    </div>
+
+    <div class="settings-content-area">
+      <div
+        id="tabFuncPerfil"
+        class="settings-tab-content"
+        style="display: block"
+      >
+        <div class="centered-content-box">
+          <div class="settings-card">
+            <h3><i class="fa-solid fa-lock"></i> Dados de Acesso</h3>
+            <form id="empProfileForm" style="margin-top: 15px">
+              <div class="form-group">
+                <label>Meu Nome</label
+                ><input type="text" id="empProfileName" required />
+              </div>
+              <div class="form-group" style="margin-top: 15px">
+                <label>Nova Palavra-passe</label
+                ><input
+                  type="password"
+                  id="empProfilePassword"
+                  placeholder="Opcional"
+                />
+              </div>
+              <button
+                type="submit"
+                class="btn btn-small"
+                style="margin-top: 15px"
+              >
+                <i class="fa-solid fa-floppy-disk"></i> Atualizar
+              </button>
+              <div
+                id="empProfileAlert"
+                class="hidden"
+                style="margin-top: 10px"
+              ></div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div id="tabFuncAparencia" class="settings-tab-content">
+        <div class="centered-content-box">
+          <div class="settings-card">
+            <h3><i class="fa-solid fa-display"></i> Aparência do Sistema</h3>
+            <div
+              class="theme-toggle-card"
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px;
+                background: #f8fafc;
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+                margin-top: 15px;
+              "
+            >
+              <div>
+                <strong style="display: block; margin-bottom: 5px"
+                  >Modo Escuro</strong
+                ><span style="font-size: 13px; color: #64748b"
+                  >Esquema de cores para pouca luz.</span
+                >
+              </div>
+              <button
+                type="button"
+                class="btn theme-toggle-btn"
+                onclick="toggleDarkMode()"
+                style="
+                  background-color: #1e293b;
+                  color: white;
+                  min-width: 140px;
+                "
+              >
+                <i class="fa-solid fa-moon"></i> Ativar Escuro
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
