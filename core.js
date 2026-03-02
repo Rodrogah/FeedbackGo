@@ -663,3 +663,46 @@ document.addEventListener('click', function(e) {
       });
   }
 });
+
+// =======================================================
+// LÓGICA DE INSTALAÇÃO DO APLICATIVO (PWA)
+// =======================================================
+let deferredPrompt;
+const installBanner = document.getElementById('pwa-install-banner');
+const installBtn = document.getElementById('pwa-install-btn');
+const closeBtn = document.getElementById('pwa-close-btn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Previne a barrinha feia padrão do Google Chrome
+    e.preventDefault();
+    // Guarda o evento nativo para usar quando o utilizador clicar no nosso botão
+    deferredPrompt = e;
+    
+    // Mostra o nosso banner bonito (Apenas em ecrãs de telemóvel)
+    if (window.innerWidth <= 768 && installBanner) {
+        installBanner.style.display = 'flex';
+    }
+});
+
+if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+        installBanner.style.display = 'none'; // Esconde o banner
+        if (deferredPrompt) {
+            deferredPrompt.prompt(); // Mostra a tela de instalação nativa do Android
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`Escolha do utilizador: ${outcome}`);
+            deferredPrompt = null;
+        }
+    });
+}
+
+if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+        installBanner.style.display = 'none'; // Oculta se o utilizador não quiser instalar agora
+    });
+}
+
+// Opcional: Registar o Service Worker para garantir que o evento dispara
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(() => console.log('Service Worker Registado!'));
+}
