@@ -799,6 +799,26 @@ body.dark-mode .btn-icon-only { background: #0f172a; border-color: #334155; }
       margin: 0 !important;
   }
 }
+/* ======================================================= */
+/* BLINDAGEM DO COMPUTADOR (PC) - PROTEGE AS CONFIGURAÇÕES */
+/* ======================================================= */
+@media (min-width: 769px) {
+  /* 1. Garante que a área de conteúdo (direita) NUNCA se esconda no PC */
+  .settings-content-area {
+      display: block !important;
+  }
+
+  /* 2. Garante que o menu lateral de opções NUNCA desapareça no PC */
+  .settings-nav-list,
+  .settings-nav-list.mobile-hidden {
+      display: flex !important;
+  }
+
+  /* 3. Esconde o botão "< Voltar" (que só faz sentido no telemóvel) */
+  .btn-mobile-back {
+      display: none !important;
+  }
+}
 }
 
 /* ============ MODO NOTURNO (DARK MODE) - REFINADO E CORRIGIDO ============ */
