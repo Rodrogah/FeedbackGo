@@ -23,6 +23,7 @@ body {
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   line-height: 1.6;
+  overscroll-behavior-y: none;
 }
 
 .hidden {
@@ -1615,4 +1616,21 @@ body.dark-mode .ptr-bubble { background: #334155; }
 #login-container, 
 #app-interface {
     display: none;
+}
+
+/* ============ ANIMAÇÕES DE NAVEGAÇÃO ============ */
+.fade-entrar {
+  /* Usamos cubic-bezier para um movimento que começa rápido e trava suavemente no final */
+  animation: transicaoTela 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes transicaoTela {
+  0% {
+      opacity: 0;
+      transform: translateY(12px) scale(0.99);
+  }
+  100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+  }
 }

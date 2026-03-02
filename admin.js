@@ -17,19 +17,23 @@ function initAdminPanel() {
 
 async function showAdminSection(sec) {
   const palco = document.getElementById('adminConteudoDinamico');
-  if (!palco)
-    return console.error('Erro fatal: adminConteudoDinamico não existe!');
+  if (!palco) return console.error('Erro fatal: adminConteudoDinamico não existe!');
 
-  document
-    .querySelectorAll('#adminPanel .nav-item')
-    .forEach((i) => i.classList.remove('active'));
-  const activeNav = document.querySelector(
-    `#adminPanel .nav-item[onclick*="${sec}"]`
-  );
+  // Atualiza o menu ativo (deixa o botão azul)
+  document.querySelectorAll('#adminPanel .nav-item').forEach((i) => i.classList.remove('active'));
+  const activeNav = document.querySelector(`#adminPanel .nav-item[onclick*="${sec}"]`);
   if (activeNav) activeNav.classList.add('active');
 
-  palco.innerHTML =
-    '<div style="text-align:center; padding:50px;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i> A carregar...</div>';
+  // 🚀 1. ANIMAÇÃO DE SAÍDA: Apaga o ecrã atual suavemente
+  palco.style.transition = 'opacity 0.2s ease';
+  palco.style.opacity = '0';
+  
+  // Espera a tela ficar totalmente invisível (200ms) antes de trocar o HTML
+  await new Promise(resolve => setTimeout(resolve, 200));
+
+  // Mostra um spinner super discreto durante o carregamento
+  palco.innerHTML = '<div style="text-align:center; padding:50px; opacity: 0.4;"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i></div>';
+  palco.style.opacity = '1';
 
   try {
     const rotas = {
@@ -41,10 +45,20 @@ async function showAdminSection(sec) {
       reports: 'admin-relatorios.html',
       settings: 'admin-configuracoes.html',
     };
+    
     const resposta = await fetch(`./telas/${rotas[sec]}`);
-    if (!resposta.ok)
-      throw new Error('Erro de fetch: Ficheiro não encontrado.');
-    palco.innerHTML = await resposta.text();
+    if (!resposta.ok) throw new Error('Erro de fetch: Ficheiro não encontrado.');
+    
+    // ANIMAÇÃO DE ENTRADA: Envolve o novo HTML na div animada que criamos no CSS
+    const htmlNovo = await resposta.text();
+
+    // Devolvemos o HTML original sem NENHUMA div extra para não quebrar o CSS
+    palco.innerHTML = htmlNovo;
+
+    // Aplicamos a animação DIRETAMENTE no palco principal
+    palco.classList.remove('fade-entrar');
+    void palco.offsetWidth; // Truque do JS para forçar a animação a reiniciar
+    palco.classList.add('fade-entrar');
 
     window.scrollTo({ top: 0, behavior: 'smooth' }); // Força o topo ao trocar de ecrã
 
