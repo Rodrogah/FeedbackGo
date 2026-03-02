@@ -371,9 +371,13 @@ function populateAdminFilters(c) {
 window.applyAdminFilters = function (page = 1) {
   currentAdminPage = page;
   
-  const t = document.getElementById('admFilterTeam').value;
-  const uId = document.getElementById('adminFilterUser').value;
-  const s = document.getElementById('adminFilterStartDate').value;
+  const t = document.getElementById('admFilterTeam') ? document.getElementById('admFilterTeam').value : '';
+  const uId = document.getElementById('adminFilterUser') ? document.getElementById('adminFilterUser').value : '';
+  const s = document.getElementById('adminFilterStartDate') ? document.getElementById('adminFilterStartDate').value : '';
+  
+  // Pega a escolha do usuário (se não achar o filtro, usa 'desc' como padrão)
+  const ordemEl = document.getElementById('ordemHistorico');
+  const ordemEscolhida = ordemEl ? ordemEl.value : 'desc';
   
   let f = activities.filter((a) => a.companyId === currentUser.companyId);
   
@@ -384,18 +388,25 @@ window.applyAdminFilters = function (page = 1) {
     f = f.filter((a) => tUs.includes(a.userId));
   }
   
-  // Ordena SEMPRE do mais novo para o mais antigo, com desempate por hora exata
+  // Com desempate por hora
   currentAdminFilteredActs = f.sort((a, b) => {
-    const diffData = new Date(b.date) - new Date(a.date);
-    // Se a data for exatamente igual, desempata pelo relógio interno (createdAt)
-    if (diffData === 0 && a.createdAt && b.createdAt) {
-        return new Date(b.createdAt) - new Date(a.createdAt);
+    const dataA = a.date || '';
+    const dataB = b.date || '';
+
+    // Se a data for exatamente igual, desempata pela hora de criação (createdAt)
+    if (dataA === dataB) {
+        const tempoA = new Date(a.createdAt || 0).getTime();
+        const tempoB = new Date(b.createdAt || 0).getTime();
+        return ordemEscolhida === 'asc' ? tempoA - tempoB : tempoB - tempoA;
     }
-    return diffData;
+    
+    // Se as datas forem diferentes, usa a ordem escolhida
+    return ordemEscolhida === 'asc' 
+        ? dataA.localeCompare(dataB) 
+        : dataB.localeCompare(dataA);
   });
 
-  // 👇 ESTA LINHA FALTAVA: Atualiza o visual da tabela do Admin!
-  renderAdminHistoryPage();
+  if (typeof renderAdminHistoryPage === 'function') renderAdminHistoryPage();
 };
 
 window.renderAdminHistoryPage = function() {
@@ -795,11 +806,13 @@ window.openSettingsTab = function (tabId, btnElement) {
 };
 
 window.getFilteredReportData = function () {
-  const t = document.getElementById('reportFilterTeam').value;
-  const uId = document.getElementById('reportFilterUser').value;
-  const s = document.getElementById('reportStartDate').value;
-  const e = document.getElementById('reportEndDate').value;
+  const t = document.getElementById('reportFilterTeam') ? document.getElementById('reportFilterTeam').value : '';
+  const uId = document.getElementById('reportFilterUser') ? document.getElementById('reportFilterUser').value : '';
+  const s = document.getElementById('reportStartDate') ? document.getElementById('reportStartDate').value : '';
+  const e = document.getElementById('reportEndDate') ? document.getElementById('reportEndDate').value : '';
+  
   let f = activities.filter((a) => a.companyId === currentUser.companyId);
+  
   if (s) f = f.filter((a) => a.date >= s);
   if (e) f = f.filter((a) => a.date <= e);
   if (t) {
@@ -807,7 +820,21 @@ window.getFilteredReportData = function () {
     f = f.filter((a) => tUs.includes(a.userId));
   }
   if (uId) f = f.filter((a) => a.userId === parseInt(uId));
-  return f.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  // Sempre Mais Novo -> Mais Antigo na Tela
+  return f.sort((a, b) => {
+    const dataA = a.date || '';
+    const dataB = b.date || '';
+
+    // Desempate por hora se forem do mesmo dia
+    if (dataA === dataB) {
+        const tempoA = new Date(a.createdAt || 0).getTime();
+        const tempoB = new Date(b.createdAt || 0).getTime();
+        return tempoB - tempoA; 
+    }
+    
+    return dataB.localeCompare(dataA);
+  });
 };
 
 window.generateReport = function () {

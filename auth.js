@@ -34,6 +34,38 @@ document
       team: 'Administração',
     };
 
+    // Monitor de Autenticação (O Porteiro do App)
+    firebase.auth().onAuthStateChanged(async (user) => {
+      const loginUI = document.getElementById('login-container');
+      const appUI = document.getElementById('app-interface');
+  
+      try {
+          if (user) {
+              console.log("Usuário autenticado:", user.email);
+              if (loginUI) loginUI.style.display = 'none';
+              if (appUI) appUI.style.display = 'flex';
+  
+              // Tenta inicializar o app, mas não trava se falhar
+              if (typeof window.initApp === 'function') {
+                  await window.initApp(user);
+              } else {
+                  console.warn("Aviso: initApp não encontrada. Verifique erros no core.js.");
+              }
+          } else {
+              if (appUI) appUI.style.display = 'none';
+              if (loginUI) loginUI.style.display = 'flex';
+          }
+      } catch (error) {
+          console.error("Erro crítico no fluxo de autenticação:", error);
+      } finally {
+          // O BLOCO FINALLY SEMPRE EXECUTA: Isso garante que o Splash suma
+          if (splash) {
+              splash.classList.add('hidden');
+              setTimeout(() => splash.remove(), 400);
+          }
+      }
+  });
+
     // NOVA ARQUITETURA: Salvar em coleções separadas no Firebase!
     Promise.all([
       db.collection('empresas').doc(nComp.id.toString()).set(nComp),

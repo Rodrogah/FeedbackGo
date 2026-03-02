@@ -36,6 +36,33 @@
       })();
     </script>
 
+<div id="pull-to-refresh" class="ptr-element">
+  <div class="ptr-bubble">
+      <div class="ptr-icon"><i class="fa-solid fa-arrow-down"></i></div>
+      <div class="ptr-spinner" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+  </div>
+</div>
+
+<script>
+  (function() {
+      const temaSalvo = localStorage.getItem('feedbackgo_theme');
+      if (temaSalvo === 'dark') {
+          document.body.classList.add('dark-mode');
+      }
+  })();
+</script>
+
+<script>
+// Se o app não carregar em 4 segundos, remove o splash na marra
+setTimeout(function() {
+    var s = document.getElementById('splash-screen');
+    if (s) {
+        s.style.opacity = '0';
+        setTimeout(function() { s.remove(); }, 500);
+    }
+}, 4000);
+</script>
+
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>

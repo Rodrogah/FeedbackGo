@@ -29,6 +29,22 @@ body {
   display: none !important;
 }
 
+/* Bloqueia a exibição inicial para evitar o flash de login */
+#login-container, 
+#app-interface {
+    display: none;
+}
+
+/* Splash screen sempre por cima de tudo */
+#splash-screen {
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
 /* ============ BOTÕES ============ */
 .btn {
   padding: 12px 20px;
@@ -1477,4 +1493,126 @@ body.dark-mode .pwa-banner { background: #1e293b; border-color: #334155; box-sha
 @keyframes slideUpPwa {
   from { bottom: -120px; opacity: 0; transform: translateX(-50%) scale(0.9); }
   to { bottom: 20px; opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+/* ======================================================= */
+/* CHAVINHA DE TEMA - VERSÃO FINAL SEM SALTOS              */
+/* ======================================================= */
+.theme-switch-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  margin: 15px 0;
+  transition: background 0.3s ease;
+}
+
+/* Força a visibilidade total no Modo Escuro */
+body.dark-mode .theme-switch-container { 
+  background: #1e293b !important; 
+  border-color: #334155 !important; 
+}
+
+.theme-switch-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Fixa a largura do texto para o botão não pular */
+  min-width: 140px; 
+}
+
+/* Cor do texto: Forçamos branco no Dark Mode para não sumir */
+#themeSwitchText {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b; /* Cor no modo claro */
+}
+
+body.dark-mode #themeSwitchText {
+  color: #f8fafc !important; /* Branco acinzentado no modo escuro */
+}
+
+#themeSwitchIcon {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+/* A estrutura da chavinha (Switch) */
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0; /* Impede que a chavinha esmague */
+}
+
+.theme-switch input { opacity: 0; width: 0; height: 0; }
+
+.theme-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #cbd5e1;
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.theme-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.theme-switch input:checked + .theme-slider {
+  background-color: #10b981 !important; /* Verde Sucesso */
+}
+
+.theme-switch input:checked + .theme-slider:before {
+  transform: translateX(22px);
+}
+
+/* ======================================================= */
+/* PULL TO REFRESH - VERSÃO BOLINHA FLUTUANTE              */
+/* ======================================================= */
+.ptr-element {
+  position: fixed;
+  top: 50px; /* Ajuste para ficar abaixo do seu header */
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  z-index: 1000;
+  transform: translateY(-120px); /* Garante que começa fora do ecrã */
+  transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1);
+  pointer-events: none; /* Deixa clicar no que está atrás dela */
+}
+
+.ptr-bubble {
+  width: 42px;
+  height: 42px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  color: #10b981;
+}
+
+body.dark-mode .ptr-bubble { background: #334155; }
+
+/* Esconde as interfaces até o Firebase dar o veredito */
+#login-container, 
+#app-interface {
+    display: none;
 }

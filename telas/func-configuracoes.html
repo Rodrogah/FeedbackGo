@@ -77,25 +77,17 @@
                 margin-top: 15px;
               "
             >
-              <div>
-                <strong style="display: block; margin-bottom: 5px"
-                  >Modo Escuro</strong
-                ><span style="font-size: 13px; color: #64748b"
-                  >Esquema de cores para pouca luz.</span
-                >
+            <div class="theme-switch-container">
+              <div class="theme-switch-label">
+                  <i class="fa-solid fa-moon" id="themeSwitchIcon"></i> 
+                  <span id="themeSwitchText">Modo Escuro</span>
               </div>
-              <button
-                type="button"
-                class="btn theme-toggle-btn"
-                onclick="toggleDarkMode()"
-                style="
-                  background-color: #1e293b;
-                  color: white;
-                  min-width: 140px;
-                "
-              >
-                <i class="fa-solid fa-moon"></i> Ativar Escuro
-              </button>
+              
+              <label class="theme-switch">
+                  <input type="checkbox" id="chkDarkMode" onchange="toggleDarkModeSwitch()">
+                  <span class="theme-slider"></span>
+              </label>
+          </div>
             </div>
           </div>
         </div>

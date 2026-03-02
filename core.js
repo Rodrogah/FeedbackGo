@@ -91,13 +91,24 @@ function processAutoLogin() {
     );
     if (autoUser) {
       currentUser = autoUser;
-      showPanel(autoUser.role);
+      // 🛡️ PROTEÇÃO: Só chama se a função showPanel existir
+      if (typeof showPanel === 'function') {
+        showPanel(autoUser.role);
+      } else {
+        console.warn("Aviso: showPanel ainda não carregou.");
+        // Tenta novamente em 500ms se falhar
+        setTimeout(() => { if(typeof showPanel === 'function') showPanel(autoUser.role); }, 500);
+      }
       return;
     } else {
       localStorage.removeItem('feedbackgo_logged_user');
     }
   }
-  showLoginScreen();
+  
+  // 🛡️ PROTEÇÃO: Só chama se showLoginScreen existir
+  if (typeof showLoginScreen === 'function') {
+    showLoginScreen();
+  }
 }
 
 function refreshLiveData() {
@@ -172,17 +183,24 @@ function sendWelcomeEmail(userName, userEmail, userPass) {
 function sendFilteredReportEmail(event) {
   const filteredActs = getFilteredReportData();
   if (filteredActs.length === 0) return alert('Não há dados para enviar.');
+
+  // Garante que o texto comece pelo registro mais antigo
+  filteredActs.sort((a, b) => a.date.localeCompare(b.date));
+
   let txt = `Relatório Gerado:\nTotal: ${filteredActs.length}\n\n`;
   filteredActs.forEach((act) => {
     const u = users.find((x) => x.id === act.userId);
+    // Montagem do texto seguindo a ordem cronológica
     txt += `[${formatDate(act.date)}] ${u ? u.name : 'Removido'} - ${
       act.category
     }: ${act.title} (${act.status})\n`;
   });
+
   const btn = event.currentTarget;
   const orig = btn.innerHTML;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A Enviar...';
   btn.disabled = true;
+
   emailjs
     .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_REPORT, {
       to_name: currentUser.name,
@@ -321,24 +339,17 @@ function deleteActivity(id) {
 // ============ 6. MODO ESCURO ============
 function toggleDarkMode() {
   const body = document.body;
-  body.classList.toggle('dark-mode');
-  const isDark = body.classList.contains('dark-mode');
+  const isDark = body.classList.toggle('dark-mode');
+  
+  // Padronização da chave para salvar a preferência
   localStorage.setItem('feedbackgo_theme', isDark ? 'dark' : 'light');
+  
   updateThemeIcons(isDark);
+  
+  // Se você tiver a chavinha nas configurações, sincronize ela aqui
+  if (typeof syncThemeSwitchUI === 'function') syncThemeSwitchUI();
 }
-function updateThemeIcons(isDark) {
-  document.querySelectorAll('.theme-toggle-btn').forEach((btn) => {
-    if (isDark) {
-      btn.innerHTML = '<i class="fa-solid fa-sun"></i> Modo Claro';
-      btn.style.backgroundColor = '#eab308';
-      btn.style.color = '#000';
-    } else {
-      btn.innerHTML = '<i class="fa-solid fa-moon"></i> Ativar Escuro';
-      btn.style.backgroundColor = '#1e293b';
-      btn.style.color = '#fff';
-    }
-  });
-}
+
 window.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('feedbackgo_theme') === 'dark') {
     document.body.classList.add('dark-mode');
@@ -430,34 +441,89 @@ function closeEditModal() {
       '<i class="fa-solid fa-floppy-disk"></i> Guardar Alterações';
   }
 }
+// Variáveis de controle para o histórico
+// Variável global para controlar a escolha do usuário
+let currentHistoryOrder = 'asc'; 
+
 function openHistoryModal(id) {
   const a = activities.find((x) => x.id === id);
   if (!a) return;
+
   const content = document.getElementById('historyContent');
   if (content) {
-    content.innerHTML =
-      a.logs && a.logs.length > 0
-        ? a.logs
-            .map(
-              (log) => `
-            <div class="log-item"><div class="log-dot"></div><div class="log-content">
-                <span class="log-time" style="display:block; font-size:11px; opacity:0.7;">${new Date(
-                  log.date
-                ).toLocaleString('pt-BR')}</span>
-                <strong>${
-                  log.userName
-                }</strong> alterou para <span style="text-transform:uppercase; font-weight:bold; font-size:10px;">${
-                log.to
-              }</span>
-            </div></div>`
-            )
-            .join('')
-        : '<p style="text-align:center; padding:20px; opacity:0.6;">Nenhuma alteração registrada.</p>';
+    // 🏗️ INJEÇÃO DO HTML: Aqui criamos o seletor que faltava
+    content.innerHTML = `
+      <div class="history-header-filter" style="margin-bottom: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+        <span style="font-size: 12px; opacity: 0.8;">Ordem:</span>
+        <select id="changeHistoryOrder" onchange="reOrderHistory(${id})" style="padding: 6px 10px; border-radius: 8px; font-size: 12px; background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); cursor: pointer;">
+          <option value="asc" ${currentHistoryOrder === 'asc' ? 'selected' : ''}>Mais antigo para novo</option>
+          <option value="desc" ${currentHistoryOrder === 'desc' ? 'selected' : ''}>Mais novo para antigo</option>
+        </select>
+      </div>
+      <div id="logItemsList"></div>
+    `;
+    // Chama a função para desenhar os itens na tela
+    reOrderHistory(id);
   }
   document.getElementById('historyModal').classList.remove('hidden');
 }
+
+// 🔄 Função que redesenha os logs quando você muda o filtro
+window.reOrderHistory = function(activityId) {
+  const a = activities.find((x) => x.id === activityId);
+  const order = document.getElementById('changeHistoryOrder').value;
+  currentHistoryOrder = order; // Salva a preferência para a próxima vez
+  
+  const listContainer = document.getElementById('logItemsList');
+  let logs = a.logs ? [...a.logs] : [];
+
+  // Ordena os logs baseados na data/hora da alteração
+  logs.sort((x, y) => {
+    return order === 'asc' ? new Date(x.date) - new Date(y.date) : new Date(y.date) - new Date(x.date);
+  });
+
+  listContainer.innerHTML = logs.length > 0
+    ? logs.map(log => `
+        <div class="log-item"><div class="log-dot"></div><div class="log-content">
+            <span class="log-time" style="display:block; font-size:11px; opacity:0.7;">${new Date(log.date).toLocaleString('pt-BR')}</span>
+            <strong>${log.userName}</strong> alterou para <span style="text-transform:uppercase; font-weight:bold; font-size:10px;">${log.to}</span>
+        </div></div>`).join('')
+    : '<p style="text-align:center; padding:20px; opacity:0.6;">Nenhuma alteração registrada.</p>';
+};
+
 function closeHistoryModal() {
   document.getElementById('historyModal').classList.add('hidden');
+}
+
+function toggleHistorySort() {
+  currentHistoryOrder = document.getElementById('sortHistoryOrder').value;
+  renderHistoryLogs();
+}
+
+function renderHistoryLogs() {
+  const container = document.getElementById('logsContainer');
+  if (!container) return;
+
+  // Ordena os logs
+  const sortedLogs = [...currentHistoryLogs].sort((a, b) => {
+    return currentHistoryOrder === 'asc' 
+      ? new Date(a.date) - new Date(b.date) 
+      : new Date(b.date) - new Date(a.date);
+  });
+
+  container.innerHTML = sortedLogs.length > 0
+    ? sortedLogs.map(log => `
+        <div class="log-item">
+          <div class="log-dot"></div>
+          <div class="log-content">
+            <span class="log-time" style="display:block; font-size:11px; opacity:0.7;">
+              ${new Date(log.date).toLocaleString('pt-BR')}
+            </span>
+            <strong>${log.userName}</strong> alterou para 
+            <span style="text-transform:uppercase; font-weight:bold; font-size:10px;">${log.to}</span>
+          </div>
+        </div>`).join('')
+    : '<p style="text-align:center; padding:20px; opacity:0.6;">Nenhuma alteração registrada.</p>';
 }
 
 // ============ UTILS DIVERSOS ============
@@ -706,3 +772,147 @@ if (closeBtn) {
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').then(() => console.log('Service Worker Registado!'));
 }
+
+// =======================================================
+// LÓGICA DA CHAVINHA DE TEMA (DARK MODE)
+// =======================================================
+
+// 1. Função que roda quando clica na chavinha
+window.toggleDarkModeSwitch = function() {
+  // Alterna a classe no Body
+  const isDark = document.body.classList.toggle('dark-mode');
+  
+  // Guarda a preferência
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  
+  // Sincroniza o texto e ícone
+  syncThemeSwitchUI();
+};
+
+// 2. Função que arruma o visual (Texto e Ícone)
+window.syncThemeSwitchUI = function() {
+  const chk = document.getElementById('chkDarkMode');
+  const textElement = document.getElementById('themeSwitchText');
+  const iconElement = document.getElementById('themeSwitchIcon');
+  
+  const isDark = document.body.classList.contains('dark-mode');
+
+  if (chk) chk.checked = isDark;
+  
+  if (textElement) {
+      textElement.innerText = isDark ? 'Modo Claro' : 'Modo Escuro';
+      // Garante a cor via JS caso o CSS falhe
+      textElement.style.color = isDark ? '#f8fafc' : '#1e293b';
+  }
+  
+  if (iconElement) {
+      iconElement.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      // Sol amarelo no escuro, Lua azulada no claro
+      iconElement.style.color = isDark ? '#fbbf24' : '#64748b';
+  }
+};
+
+// 3. Olheiro Automático (CORRIGIDO: Previne o Loop Infinito)
+const themeObserver = new MutationObserver(() => {
+  if (document.getElementById('chkDarkMode')) {
+      // 1. DESLIGA o observador temporariamente para não gerar loop
+      themeObserver.disconnect(); 
+      
+      // 2. Atualiza os textos e ícones em segurança
+      syncThemeSwitchUI();
+      
+      // 3. LIGA o observador novamente
+      themeObserver.observe(document.body, { childList: true, subtree: true });
+  }
+});
+// Inicia o observador pela primeira vez
+themeObserver.observe(document.body, { childList: true, subtree: true });
+
+// =======================================================
+// MOTOR PULL-TO-REFRESH (VERSÃO MOBILE FINAL)
+// =======================================================
+(function() {
+  let startY = 0;
+  let isPulling = false;
+  const el = document.getElementById('pull-to-refresh');
+
+  // 1. Início do Toque
+  window.addEventListener('touchstart', (e) => {
+      if (window.scrollY === 0) {
+          startY = e.touches[0].pageY;
+          isPulling = true;
+      }
+  }, { passive: true });
+
+  // 2. Movimento do Dedo
+  window.addEventListener('touchmove', (e) => {
+      if (!isPulling || !el) return;
+
+      const currentY = e.touches[0].pageY;
+      const diff = currentY - startY;
+
+      // Só desce se o usuário estiver puxando para baixo
+      if (diff > 0 && diff < 150) {
+          const moveY = -100 + diff; 
+          el.style.transform = `translateY(${moveY}px)`;
+          
+          // Feedback visual: vira a seta ao atingir o ponto de ativação
+          if (diff > 80) el.classList.add('ptr-flip');
+          else el.classList.remove('ptr-flip');
+      }
+  }, { passive: true });
+
+  // 3. Fim do Toque (Ação)
+  window.addEventListener('touchend', async () => {
+    if (!isPulling) return;
+    isPulling = false;
+
+    // Devolve a transição suave
+    el.style.transition = 'transform 0.3s cubic-bezier(0, 0, 0.2, 1)';
+
+    // Verifica se puxou o suficiente para disparar (80px)
+    const diff = el.getBoundingClientRect().top + 120;
+
+    if (diff > 80) {
+        const icon = el.querySelector('.ptr-icon');
+        const spinner = el.querySelector('.ptr-spinner');
+
+        if (icon) icon.style.display = 'none';
+        if (spinner) spinner.style.display = 'block';
+        
+        // Segura a bolinha visível enquanto "carrega"
+        el.style.transform = `translateY(20px)`;
+        if (navigator.vibrate) navigator.vibrate(10); // Vibra o celular
+
+        // Faz o conteúdo dar um "fade" para mostrar que recarregou
+        const palco = document.getElementById('adminConteudoDinamico') || document.getElementById('funcConteudoDinamico');
+        if (palco) {
+            palco.style.transition = 'opacity 0.2s ease';
+            palco.style.opacity = '0.3'; // Escurece a tela para dar sensação de load
+        }
+
+        // Simula um pequeno tempo (500ms) para o utilizador processar o refresh visual
+        setTimeout(() => {
+            // Atualiza os dados da tela atual
+            if (typeof refreshLiveData === 'function') refreshLiveData();
+            
+            // Garante que a aba de relatórios também seja atualizada se estiver aberta
+            if (document.getElementById('periodReport') && typeof generateReport === 'function') generateReport();
+
+            // Volta a tela ao normal (Clareia)
+            if (palco) palco.style.opacity = '1';
+
+            // Recolhe a bolinha suavemente
+            el.style.transform = `translateY(-120px)`;
+            setTimeout(() => {
+                if (icon) icon.style.display = 'block';
+                if (spinner) spinner.style.display = 'none';
+                el.classList.remove('ptr-flip');
+            }, 300);
+        }, 500); 
+    } else {
+        // Se não puxou o suficiente, apenas esconde
+        el.style.transform = `translateY(-120px)`;
+    }
+});
+})();
