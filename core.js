@@ -216,23 +216,23 @@ function generateActivityTableHTML(acts, isAdmin = false) {
               const canEdit = isAdmin || a.userId === currentUser.id;
               return `<tr>${
                 isAdmin
-                  ? `<td><strong>${
+                  ? `<td class="td-membro"><strong>${
                       u ? u.name : 'Removido'
-                    }</strong><br><span style="font-size:11px; color:#64748B;">${
+                    }</strong> <span class="td-equipe" style="color: var(--color-text-secondary); font-weight: normal;"> - ${
                       u ? u.team : ''
                     }</span></td>`
                   : ''
               }
-              <td style="white-space:nowrap">${formatDate(a.date)}</td>
-              <td><span class="badge cat-badge-dynamic" style="${getCategoryStyleString(
+              <td class="td-data">${formatDate(a.date)}</td>
+              <td class="td-categoria"><span class="badge cat-badge-dynamic" style="${getCategoryStyleString(
                 a.category || 'Geral'
               )}">${a.category || 'Geral'}</span></td>
-              <td><strong>${
+              <td class="td-titulo"><strong>${
                 a.title
-              }</strong></td><td style="font-size: 12px; color: var(--color-text-secondary); max-width: 250px; white-space: normal;">${
+              }</strong></td><td class="td-detalhes">${
                 a.description ? a.description : '-'
               }</td>
-              <td>${getStatusBadge(a.status)}</td><td>${
+              <td class="td-status">${getStatusBadge(a.status)}</td><td class="td-acoes">${
                 canEdit
                   ? `
                   ${
@@ -646,3 +646,20 @@ window.openAttachmentModal = function (activityId) {
 window.closeAttachmentModal = function () {
   document.getElementById('attachmentModal').classList.add('hidden');
 };
+
+// ============ MENU MOBILE (HAMBÚRGUER) ============
+window.toggleMobileMenu = function() {
+  // Abre ou fecha a gaveta do menu e o rodapé
+  document.querySelectorAll('.sidebar-nav, .sidebar-footer').forEach(el => {
+      el.classList.toggle('open');
+  });
+};
+
+// Fechar o menu automaticamente ao clicar numa opção
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.nav-item')) {
+      document.querySelectorAll('.sidebar-nav, .sidebar-footer').forEach(el => {
+          el.classList.remove('open');
+      });
+  }
+});

@@ -46,6 +46,8 @@ async function showAdminSection(sec) {
       throw new Error('Erro de fetch: Ficheiro não encontrado.');
     palco.innerHTML = await resposta.text();
 
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Força o topo ao trocar de ecrã
+
     const c = companies.find((x) => x.id === currentUser.companyId);
 
     if (sec === 'dashboard') {
@@ -750,17 +752,46 @@ function setupAdminSettingsForms() {
   }
 }
 
+// ============ NAVEGAÇÃO DE CONFIGURAÇÕES COM ROLAGEM AUTOMÁTICA ============
 window.openSettingsTab = function (tabId, btnElement) {
-  document
-    .querySelectorAll('.settings-tab-content')
-    .forEach((tab) => tab.style.removeProperty('display'));
+  document.querySelectorAll('.settings-tab-content').forEach((tab) => {
+      tab.style.display = 'none';
+  });
+
   const navContainer = btnElement.closest('.settings-nav-list');
-  if (navContainer)
-    navContainer
-      .querySelectorAll('.nav-list-item')
-      .forEach((btn) => btn.classList.remove('active'));
-  document.getElementById(tabId).style.display = 'block';
+  if (navContainer) {
+      navContainer.querySelectorAll('.nav-list-item').forEach((btn) => btn.classList.remove('active'));
+  }
+
+  const activeTab = document.getElementById(tabId);
+  activeTab.style.display = 'block';
   btnElement.classList.add('active');
+
+  // 🚀 FORÇA A ROLAGEM PARA O TOPO SEMPRE QUE ABRIR UMA ABA
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (window.innerWidth <= 768) {
+      navContainer.classList.add('mobile-hidden');
+      const contentArea = activeTab.closest('.settings-content-area');
+      contentArea.classList.add('mobile-active');
+
+      if (!activeTab.querySelector('.btn-mobile-back')) {
+          const backBtn = document.createElement('button');
+          backBtn.className = 'btn-mobile-back';
+          backBtn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> Voltar';
+          
+          backBtn.onclick = function() {
+              contentArea.classList.remove('mobile-active');
+              navContainer.classList.remove('mobile-hidden');
+              activeTab.style.display = 'none';
+              btnElement.classList.remove('active');
+              // 🚀 FORÇA A ROLAGEM PARA O TOPO AO VOLTAR PARA O MENU
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+          
+          activeTab.insertBefore(backBtn, activeTab.firstChild);
+      }
+  }
 };
 
 window.getFilteredReportData = function () {

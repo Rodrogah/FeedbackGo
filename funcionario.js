@@ -25,6 +25,8 @@ async function showEmployeeSection(sec) {
     if (!resposta.ok) throw new Error('Ficheiro não encontrado');
     palco.innerHTML = await resposta.text();
 
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Força o topo ao trocar de ecrã
+
     if (sec === 'dashboard') {
       const greet = document.getElementById('employeeGreeting');
       if (greet) greet.textContent = `Olá, ${currentUser.name.split(' ')[0]}!`;
