@@ -74,9 +74,28 @@ async function showAdminSection(sec) {
       setupNewTeamForm();
     } else if (sec === 'reports') {
       const teamFilter = document.getElementById('reportFilterTeam');
-      if (teamFilter) teamFilter.innerHTML = '<option value="">Todas as Equipes</option>' + (c.teams || []).map((t) => `<option value="${t}">${t}</option>`).join('');
+      if (teamFilter)
+        teamFilter.innerHTML =
+          '<option value="">Todas as Equipes</option>' +
+          (c.teams || [])
+            .map((t) => `<option value="${t}">${t}</option>`)
+            .join('');
       const userFilter = document.getElementById('reportFilterUser');
-      if (userFilter) userFilter.innerHTML = '<option value="">Todos os Colaboradores</option>' + users.filter((u) => u.companyId === c.id).map((u) => `<option value="${u.id}">${u.name}</option>`).join('');
+      if (userFilter)
+        userFilter.innerHTML =
+          '<option value="">Todos os Colaboradores</option>' +
+          users
+            .filter((u) => u.companyId === c.id)
+            .map((u) => `<option value="${u.id}">${u.name}</option>`)
+            .join('');
+            
+      // NOVO: Carrega as categorias no Select de Relatórios!
+      const catFilter = document.getElementById('reportFilterCategory');
+      if (catFilter) {
+          catFilter.innerHTML = '<option value="">Todas as Categorias</option>' + 
+          (typeof buildCategorySelectOptions === 'function' ? buildCategorySelectOptions(c.categories || defaultCategories) : '');
+      }
+
     } else if (sec === 'settings') {
       const compInput = document.getElementById('settingsCompanyName');
       if (compInput) compInput.value = c.name;
@@ -395,34 +414,42 @@ window.getFilteredReportData = function () {
   const uId = document.getElementById('reportFilterUser') ? document.getElementById('reportFilterUser').value : '';
   const s = document.getElementById('reportStartDate') ? document.getElementById('reportStartDate').value : '';
   const e = document.getElementById('reportEndDate') ? document.getElementById('reportEndDate').value : '';
-  const cat = document.getElementById('reportFilterCategory') ? document.getElementById('reportFilterCategory').value : ''; // NOVO
-  const search = document.getElementById('reportFilterSearch') ? document.getElementById('reportFilterSearch').value.toLowerCase().trim() : ''; // NOVO
+  
+  // CAPTURA AS NOVAS CAIXAS
+  const cat = document.getElementById('reportFilterCategory') ? document.getElementById('reportFilterCategory').value : ''; 
+  const search = document.getElementById('reportFilterSearch') ? document.getElementById('reportFilterSearch').value.toLowerCase().trim() : ''; 
   
   let f = activities.filter((a) => a.companyId === currentUser.companyId);
   
+  // APLICA OS FILTROS
   if (s) f = f.filter((a) => a.date >= s);
   if (e) f = f.filter((a) => a.date <= e);
-  if (cat) f = f.filter((a) => a.category === cat);
+  if (cat) f = f.filter((a) => a.category === cat); // FILTRA CATEGORIA AQUI!
   if (search) {
       f = f.filter((a) => 
           (a.title && a.title.toLowerCase().includes(search)) || 
           (a.description && a.description.toLowerCase().includes(search))
       );
   }
+  
   if (t) {
     const tUs = users.filter((u) => u.team === t).map((u) => u.id);
     f = f.filter((a) => tUs.includes(a.userId));
   }
   if (uId) f = f.filter((a) => a.userId === parseInt(uId));
   
+  // Sempre Mais Novo -> Mais Antigo na Tela
   return f.sort((a, b) => {
     const dataA = a.date || '';
     const dataB = b.date || '';
+
+    // Desempate por hora se forem do mesmo dia
     if (dataA === dataB) {
         const tempoA = new Date(a.createdAt || 0).getTime();
         const tempoB = new Date(b.createdAt || 0).getTime();
         return tempoB - tempoA; 
     }
+    
     return dataB.localeCompare(dataA);
   });
 };

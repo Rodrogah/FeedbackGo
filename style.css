@@ -2187,3 +2187,30 @@ input[type="text"], input[type="email"], input[type="password"], textarea, p, h1
   padding-top: 0 !important;
   min-height: auto !important;
 }
+
+/* ======================================================= */
+/* CORREÇÃO DO MENU DROPDOWN (GRUPOS) NO MODO ESCURO       */
+/* ======================================================= */
+
+/* Estilo para o título do grupo (Ex: IOT) */
+body.dark-mode select optgroup {
+  background-color: #0f172a !important; /* Fundo escuro profundo para destacar o cabeçalho */
+  color: #10b981 !important; /* Cor verde principal para dar destaque ao título */
+  font-weight: bold !important;
+}
+
+/* Estilo para as opções selecionáveis dentro do grupo */
+body.dark-mode select option {
+  background-color: #1e293b !important; /* Fundo um pouco mais claro para as opções */
+  color: #f8fafc !important; /* Texto branco puro */
+  padding: 5px !important;
+}
+
+/* ======================================================= */
+/* CAIXAS DE SELEÇÃO (CHECKBOXES) NO MODO ESCURO           */
+/* ======================================================= */
+body.dark-mode input[type="checkbox"] {
+  color-scheme: dark; /* Força o navegador a renderizar a caixa escura */
+  accent-color: #10b981; /* Deixa o visto (check) verde ao clicar */
+  cursor: pointer;
+}
