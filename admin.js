@@ -1134,16 +1134,69 @@ function loadTarefasEnviadas() {
     });
 }
 
-// ==========================================
-// JANELA DE DETALHES DA TAREFA FINALIZADA
-// ==========================================
+// =========================================================
+// REVISÃO DE TAREFAS PELO ADMIN (COM FLUXOGRAMA DE ERROS)
+// =========================================================
+window.loadTarefasEnviadas = function() {
+  const container = document.getElementById('tabelaTarefasEnviadas');
+  if (!container) return;
+
+  container.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.6;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando tarefas...</div>';
+
+  db.collection('tarefas').where('senderId', '==', currentUser.id).get()
+  .then((querySnapshot) => {
+      if (querySnapshot.empty) {
+          container.innerHTML = '<div style="text-align:center; padding: 20px; background: var(--color-bg-primary); border-radius: 8px;">Nenhuma tarefa enviada.</div>';
+          return;
+      }
+
+      let lista = [];
+      querySnapshot.forEach(doc => lista.push(doc.data()));
+      
+      lista.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      let html = `<div class="table-container"><table>
+          <thead><tr><th>Data</th><th>Para Quem</th><th>Categoria</th><th>Tarefa</th><th>Status</th><th>Ações</th></tr></thead><tbody>`;
+      
+      lista.forEach(t => {
+          const func = users.find(u => u.id === t.userId);
+          const nomeFunc = func ? func.name : 'Removido';
+          const dataFormatada = new Date(t.createdAt).toLocaleDateString('pt-BR');
+          
+          let badgeClass = 'badge-pendente'; let badgeText = 'Pendente'; let corBg = '#fef9c3'; let corTxt = '#854d0e';
+          if (t.status === 'em_revisao') { badgeClass = 'badge-andamento'; badgeText = 'Em Revisão'; corBg = '#dbeafe'; corTxt = '#1e40af'; }
+          if (t.status === 'concluido') { badgeClass = 'badge-concluido'; badgeText = 'Aprovada'; corBg = '#dcfce7'; corTxt = '#166534'; }
+          
+          const categoriaBadge = `<span class="badge cat-badge-dynamic" style="${getCategoryStyleString(t.category || 'Geral')}">${t.category || 'Geral'}</span>`;
+
+          html += `<tr>
+              <td>${dataFormatada}</td>
+              <td><strong>${nomeFunc}</strong></td>
+              <td>${categoriaBadge}</td>
+              <td>${t.title}</td>
+              <td><span class="badge ${badgeClass}" style="background:${corBg}; color:${corTxt};">${badgeText}</span></td>
+              <td style="display:flex; gap:5px;">
+                  ${t.status === 'pendente' ? `<button onclick="abrirEditarTarefa('${t.id}')" class="btn-icon-only edit" title="Corrigir Instruções"><i class="fa-solid fa-pen"></i></button>` : ''}
+                  ${t.status === 'em_revisao' ? `<button onclick="abrirDetalhesTarefa('${t.id}')" class="btn-icon-only" title="Revisar Entrega" style="color: var(--color-info); background: rgba(59,130,246,0.1);"><i class="fa-solid fa-magnifying-glass"></i></button>` : ''}
+                  ${t.status === 'concluido' ? `<button onclick="abrirDetalhesTarefa('${t.id}')" class="btn-icon-only" title="Ver Detalhes"><i class="fa-solid fa-eye"></i></button>` : ''}
+                  <button onclick="apagarTarefaDelegada('${t.id}')" class="btn-icon-only delete" title="Apagar Tarefa"><i class="fa-solid fa-trash"></i></button>
+              </td>
+          </tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+  });
+};
+
 window.abrirDetalhesTarefa = function(idTarefa) {
   db.collection('tarefas').doc(idTarefa.toString()).get().then(docSnap => {
       if (!docSnap.exists) return;
       const t = docSnap.data();
       const func = users.find(u => u.id === t.userId);
       
-      document.getElementById('detalheTarefaTitulo').textContent = t.title;
+      document.getElementById('detalhesTarefaId').value = t.id;
+      document.getElementById('detalheTarefaTitulo').textContent = t.tituloEntrega || t.title;
       document.getElementById('detalheTarefaFunc').textContent = func ? func.name : 'Colaborador';
       document.getElementById('detalheTarefaResposta').textContent = t.respostaFuncionario || 'Nenhuma mensagem escrita na entrega.';
       
@@ -1156,9 +1209,19 @@ window.abrirDetalhesTarefa = function(idTarefa) {
           html += '</div>';
           boxAnexos.innerHTML = html;
       } else {
-          boxAnexos.innerHTML = '<span style="font-size: 13px; color: var(--color-text-secondary);"><i class="fa-solid fa-file-excel"></i> Nenhum anexo de resposta enviado pelo colaborador.</span>';
+          boxAnexos.innerHTML = '<span style="font-size: 13px; color: var(--color-text-secondary);"><i class="fa-solid fa-file-excel"></i> Nenhum anexo enviado.</span>';
       }
       
+      const areaRevisao = document.getElementById('areaRevisaoAdmin');
+      const btnFechar = document.getElementById('btnFecharDetalhes');
+      if (t.status === 'em_revisao') {
+          areaRevisao.style.display = 'block';
+          btnFechar.style.display = 'none';
+      } else {
+          areaRevisao.style.display = 'none';
+          btnFechar.style.display = 'block';
+      }
+
       document.getElementById('modalDetalhesTarefa').classList.remove('hidden');
   });
 };
@@ -1166,67 +1229,208 @@ window.abrirDetalhesTarefa = function(idTarefa) {
 window.fecharDetalhesTarefa = function() {
   document.getElementById('modalDetalhesTarefa').classList.add('hidden');
 };
-// Função para trocar abas internas no Gestor de Equipes
-window.switchDelegarTab = function(tabId, btn) {
-  // 1. Remove classes ativas de todas as seções e botões
-  document.querySelectorAll('.delegar-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  
-  // 2. Ativa a aba selecionada
-  const target = document.getElementById(tabId);
-  if(target) target.classList.add('active');
-  
-  // 3. Ativa o botão selecionado
-  if(btn) btn.classList.add('active');
-  
-  // 4. Se clicar em Status, carrega os dados atualizados
-  if (tabId === 'abaStatus') {
-      loadTarefasEnviadas();
-  }
-};
 
-// =========================================================
-// NAVEGAÇÃO E AÇÕES DA TELA DE DELEGAR
-// =========================================================
-window.openDelegarTab = function(tabId, btn) {
-  // 1. Esconde as duas abas
-  document.querySelectorAll('.delegar-tab-content').forEach(tab => tab.style.display = 'none');
-  
-  // 2. Remove o visual de "ativo" de todos os botões das abas
-  document.querySelectorAll('.nav-delegar-tab').forEach(b => {
-      b.style.background = 'transparent';
-      b.style.color = 'var(--color-text-secondary)';
-      b.style.border = '1px solid var(--color-border)';
+window.aprovarTarefaRevisao = function() {
+  const idTarefa = document.getElementById('detalhesTarefaId').value;
+  db.collection('tarefas').doc(idTarefa.toString()).get().then(docSnap => {
+      const t = docSnap.data();
+      const p1 = db.collection('tarefas').doc(idTarefa.toString()).update({ status: 'concluido', feedbackAdmin: firebase.firestore.FieldValue.delete() });
+      
+      const novaAtividade = {
+          id: Date.now(),
+          tarefaVinculadaId: idTarefa.toString(), // 🔗 AQUI ESTÁ A LIGAÇÃO ENTRE AS DUAS!
+          companyId: t.companyId,
+          userId: t.userId,
+          date: new Date().toISOString().split('T')[0], 
+          category: t.category || 'Tarefa Delegada', 
+          title: t.tituloEntrega || t.title, 
+          description: t.respostaFuncionario || 'Tarefa concluída sem observações.', 
+          status: 'concluido',
+          createdAt: new Date().toISOString(),
+          attachments: t.attachments || [] 
+      };
+      const p2 = db.collection('atividades').doc(novaAtividade.id.toString()).set(novaAtividade);
+
+      Promise.all([p1, p2]).then(() => {
+          showToast('Tarefa Aprovada com Sucesso!');
+          fecharDetalhesTarefa();
+          loadTarefasEnviadas();
+      });
   });
-
-  // 3. Mostra a aba clicada
-  document.getElementById(tabId).style.display = 'block';
-
-  // 4. Pinta o botão clicado
-  btn.style.background = 'var(--color-primary)';
-  btn.style.color = 'white';
-  btn.style.border = '1px solid var(--color-primary)';
-
-  // Recarrega a tabela se abrir a aba de enviadas
-  if(tabId === 'tabTarefasEnviadas') {
-      loadTarefasEnviadas();
-  }
 };
 
-window.apagarTarefaDelegada = function(tarefaId) {
+window.apagarTarefaDelegada = function(idTarefa) {
   showConfirm(
-      'Tem certeza que deseja apagar esta tarefa? O colaborador não poderá mais vê-la ou respondê-la.',
+      'Tem a certeza que deseja apagar esta tarefa? Se ela já estiver concluída, também será apagada do Histórico de Relatórios.',
       () => {
-          db.collection('tarefas').doc(tarefaId.toString()).delete()
+          // 1. Apaga a tarefa da aba "Delegar Tarefas"
+          const p1 = db.collection('tarefas').doc(idTarefa.toString()).delete();
+          
+          // 2. Procura a atividade "casada" no Histórico e apaga-a também (se existir)
+          const p2 = db.collection('atividades').where('tarefaVinculadaId', '==', idTarefa.toString()).get()
+              .then(snapshot => {
+                  const batch = db.batch();
+                  snapshot.forEach(doc => {
+                      batch.delete(doc.ref);
+                  });
+                  return batch.commit();
+              });
+
+          Promise.all([p1, p2])
           .then(() => {
-              showToast('Tarefa apagada com sucesso!');
-              loadTarefasEnviadas(); // Recarrega a tabela automaticamente
+              showToast('Tarefa apagada do sistema!');
+              loadTarefasEnviadas();
           })
           .catch(err => {
               console.error('Erro ao apagar tarefa:', err);
-              showToast('Erro ao apagar tarefa.', 'error');
+              showToast('Erro ao apagar.', 'error');
           });
       },
       'Apagar Tarefa'
   );
+};
+
+// ==========================================
+// LÓGICA DE DEVOLUÇÃO COM ANEXOS (ADMIN)
+// ==========================================
+let arquivosFeedbackSelecionados = [];
+
+// Escutador para quando o Admin seleciona ficheiros na revisão
+document.addEventListener('change', function(e) {
+    if(e.target && e.target.id === 'adminFeedbackArquivos') {
+        const files = Array.from(e.target.files);
+        if (files.length > 3) return showToast('Máximo de 3 arquivos!', 'error');
+        
+        arquivosFeedbackSelecionados = [];
+        const list = document.getElementById('adminFeedbackArquivosLista');
+        list.innerHTML = '';
+        
+        for (let i = 0; i < files.length; i++) {
+            if (files[i].size > 1 * 1024 * 1024) return showToast(`Arquivo muito pesado!`, 'error');
+            arquivosFeedbackSelecionados.push(files[i]);
+            list.innerHTML += `<div class="custom-file-item" style="font-size:12px; padding:5px;"><i class="fa-solid fa-file-lines" style="color: var(--color-danger);"></i> ${files[i].name}</div>`;
+        }
+    }
+});
+
+// A função que devolve a tarefa com anexos
+window.reprovarTarefaRevisao = function() {
+    const idTarefa = document.getElementById('detalhesTarefaId').value;
+    const feedback = document.getElementById('adminFeedbackRevisao').value.trim();
+    const btn = document.getElementById('btnReprovarTarefa');
+    
+    if(!feedback) return showToast('Por favor, escreva o motivo da devolução no campo de Feedback.', 'error');
+
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Devolvendo...';
+    btn.disabled = true;
+
+    const processarDevolucao = (anexosFeedback) => {
+        db.collection('tarefas').doc(idTarefa.toString()).update({ 
+            status: 'pendente', 
+            feedbackAdmin: feedback,
+            feedbackAttachments: anexosFeedback // Salva os novos anexos aqui!
+        }).then(() => {
+            showToast('Tarefa devolvida com sucesso!', 'error');
+            // Limpa o formulário
+            document.getElementById('adminFeedbackRevisao').value = '';
+            arquivosFeedbackSelecionados = [];
+            document.getElementById('adminFeedbackArquivosLista').innerHTML = '';
+            document.getElementById('adminFeedbackArquivos').value = '';
+            
+            fecharDetalhesTarefa();
+            loadTarefasEnviadas();
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }).catch(err => {
+            showToast('Erro ao devolver tarefa.', 'error');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    };
+
+    // Lê os arquivos (se houver) e converte para enviar
+    if (arquivosFeedbackSelecionados.length > 0) {
+        const promessas = arquivosFeedbackSelecionados.map((file) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function (evento) { resolve({ name: file.name, url: evento.target.result }); };
+                reader.readAsDataURL(file);
+            });
+        });
+        Promise.all(promessas).then(anexos => processarDevolucao(anexos));
+    } else {
+        processarDevolucao([]);
+    }
+};
+
+window.abrirEditarTarefa = function(id) {
+  db.collection('tarefas').doc(id.toString()).get().then(docSnap => {
+      const t = docSnap.data();
+      document.getElementById('editDelegarId').value = t.id;
+      document.getElementById('editDelegarTitulo').value = t.title;
+      document.getElementById('editDelegarDescricao').value = t.description;
+      
+      // Carrega as categorias na hora de editar
+      const c = companies.find((x) => x.id === currentUser.companyId);
+      const catEl = document.getElementById('editDelegarCategoria');
+      if (catEl && c) {
+          catEl.innerHTML = (c.categories || defaultCategories).map((cat) => `<option value="${cat}">${cat}</option>`).join('');
+          catEl.value = t.category || 'Geral'; // Seleciona a categoria atual da tarefa
+      }
+
+      document.getElementById('modalEditarTarefaDelegada').classList.remove('hidden');
+  });
+};
+
+window.fecharEditarTarefa = function() {
+  document.getElementById('modalEditarTarefaDelegada').classList.add('hidden');
+};
+
+window.salvarEdicaoTarefa = function() {
+  const id = document.getElementById('editDelegarId').value;
+  const titulo = document.getElementById('editDelegarTitulo').value;
+  const desc = document.getElementById('editDelegarDescricao').value;
+  const cat = document.getElementById('editDelegarCategoria').value;
+
+  db.collection('tarefas').doc(id.toString()).update({
+      title: titulo,
+      description: desc,
+      category: cat
+  }).then(() => {
+      showToast('Tarefa corrigida com sucesso!');
+      fecharEditarTarefa();
+      loadTarefasEnviadas();
+  });
+};
+// ==========================================
+// CONTROLE DAS ABAS E EXCLUSÃO (ADMIN DELEGAR)
+// ==========================================
+window.openDelegarTab = function(tabId, btn) {
+  // 1. Esconde todos os conteúdos das abas
+  document.querySelectorAll('.delegar-tab-content').forEach(tab => {
+      tab.style.display = 'none';
+  });
+  
+  // 2. Tira o visual de "selecionado" de todos os botões
+  document.querySelectorAll('.nav-delegar-tab').forEach(b => {
+      b.style.background = 'transparent';
+      b.style.color = 'var(--color-text-secondary)';
+      b.style.border = '1px solid var(--color-border)';
+      b.classList.remove('active');
+  });
+
+  // 3. Mostra o conteúdo da aba correta
+  document.getElementById(tabId).style.display = 'block';
+
+  // 4. Pinta o botão clicado com a cor principal
+  btn.style.background = 'var(--color-primary)';
+  btn.style.color = 'white';
+  btn.style.border = '1px solid var(--color-primary)';
+  btn.classList.add('active');
+
+  // 5. Se for a aba de enviadas, atualiza a tabela na hora
+  if(tabId === 'tabTarefasEnviadas') {
+      loadTarefasEnviadas();
+  }
 };

@@ -3,7 +3,7 @@
 </div>
 
 <div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--color-border); padding-bottom: 15px;">
-    <button class="btn btn-small nav-delegar-tab" onclick="openDelegarTab('tabNovaTarefa', this)" style="background: var(--color-primary); color: white; width: auto;">
+    <button class="btn btn-small nav-delegar-tab active" onclick="openDelegarTab('tabNovaTarefa', this)" style="background: var(--color-primary); color: white; width: auto;">
         <i class="fa-solid fa-plus"></i> Nova Tarefa
     </button>
     <button class="btn btn-small nav-delegar-tab" onclick="openDelegarTab('tabTarefasEnviadas', this)" style="background: transparent; color: var(--color-text-secondary); border: 1px solid var(--color-border); width: auto;">
@@ -66,10 +66,11 @@
 <div id="modalDetalhesTarefa" class="modal-overlay hidden" style="z-index: 10000;">
     <div class="modal-content" style="max-width: 600px;">
         <div class="modal-header">
-            <h2><i class="fa-solid fa-clipboard-check"></i> Detalhes da Entrega</h2>
+            <h2><i class="fa-solid fa-clipboard-check"></i> Revisão de Entrega</h2>
             <button class="close-modal" onclick="fecharDetalhesTarefa()">&times;</button>
         </div>
         
+        <input type="hidden" id="detalhesTarefaId">
         <h3 id="detalheTarefaTitulo" style="margin-bottom: 5px;"></h3>
         <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 15px;">Entregue por: <strong id="detalheTarefaFunc" style="color: var(--color-text-primary);"></strong></p>
         
@@ -80,8 +81,56 @@
 
         <div id="detalheTarefaAnexos" style="margin-bottom: 20px;"></div>
 
-        <div style="text-align: right; margin-top: 20px;">
-            <button class="btn btn-secondary btn-small" onclick="fecharDetalhesTarefa()">Fechar Detalhes</button>
+        <div id="areaRevisaoAdmin" style="display: none; border-top: 2px dashed var(--color-border); padding-top: 15px; margin-top: 15px;">
+            <div class="form-group">
+                <label style="color: var(--color-danger);"><i class="fa-solid fa-triangle-exclamation"></i> Feedback caso esteja Incorreto (Opcional)</label>
+                <textarea id="adminFeedbackRevisao" class="form-control" rows="2" placeholder="Descreva o que o funcionário precisa de corrigir..."></textarea>
+            </div>
+            
+            <div class="form-group" style="margin-top: 10px;">
+                <label style="color: var(--color-text-primary); font-size: 13px;"><i class="fa-solid fa-paperclip"></i> Anexar arquivos de correção (Opcional - Máx: 3)</label>
+                <div class="file-drop-area" style="padding: 10px; border-color: var(--color-danger);">
+                    <span class="fake-btn" style="background: var(--color-danger);">Anexar</span>
+                    <span class="file-msg">ou arraste e solte</span>
+                    <input type="file" id="adminFeedbackArquivos" multiple class="file-input">
+                </div>
+                <div id="adminFeedbackArquivosLista" class="custom-file-list" style="margin-top: 10px;"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
+                <button id="btnReprovarTarefa" class="btn btn-danger btn-small" onclick="reprovarTarefaRevisao()"><i class="fa-solid fa-rotate-left"></i> Devolver para Correção</button>
+                <button class="btn btn-success btn-small" onclick="aprovarTarefaRevisao()"><i class="fa-solid fa-check-double"></i> Aprovar e Concluir</button>
+            </div>
+        </div>
+
+        <div id="btnFecharDetalhes" style="text-align: right; margin-top: 20px;">
+            <button class="btn btn-secondary btn-small" onclick="fecharDetalhesTarefa()">Fechar Janela</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalEditarTarefaDelegada" class="modal-overlay hidden" style="z-index: 10000;">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-pen"></i> Corrigir Tarefa Enviada</h2>
+            <button class="close-modal" onclick="fecharEditarTarefa()">&times;</button>
+        </div>
+        <div class="form-group">
+            <label>Categoria</label>
+            <select id="editDelegarCategoria" class="form-control"></select>
+        </div>
+        <div class="form-group">
+            <label>Título Corrigido</label>
+            <input type="text" id="editDelegarTitulo" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Instruções Corrigidas</label>
+            <textarea id="editDelegarDescricao" class="form-control" rows="4"></textarea>
+        </div>
+        <input type="hidden" id="editDelegarId">
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button class="btn btn-secondary btn-small" onclick="fecharEditarTarefa()">Cancelar</button>
+            <button class="btn btn-primary btn-small" onclick="salvarEdicaoTarefa()"><i class="fa-solid fa-floppy-disk"></i> Salvar Correção</button>
         </div>
     </div>
 </div>

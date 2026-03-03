@@ -321,20 +321,37 @@ document
     }
   });
 
-function deleteActivity(id) {
-  showConfirm(
-    'Tem certeza que deseja apagar esta atividade permanentemente?',
-    () => {
-      db.collection('atividades')
-        .doc(id.toString())
-        .delete()
-        .then(() => {
-          showToast('Atividade apagada com sucesso!');
+  function deleteActivity(id) {
+    showConfirm(
+      'Tem certeza que deseja apagar esta atividade permanentemente? Se for uma tarefa delegada, ela também será apagada do sistema.',
+      () => {
+        // 1. Primeiro lemos a atividade para ver se ela tem uma tarefa 'casada' a ela
+        db.collection('atividades').doc(id.toString()).get().then(docSnap => {
+          if (!docSnap.exists) return;
+          const atividade = docSnap.data();
+          
+          // 2. Apagamos a atividade do histórico (Firebase)
+          db.collection('atividades')
+            .doc(id.toString())
+            .delete()
+            .then(() => {
+              
+              // 3. Se a atividade veio de uma tarefa delegada, apagamos a tarefa também!
+              if (atividade.tarefaVinculadaId) {
+                db.collection('tarefas').doc(atividade.tarefaVinculadaId).delete()
+                  .catch(err => console.error("Erro ao apagar tarefa vinculada:", err));
+              }
+  
+              showToast('Atividade apagada com sucesso!');
+              
+              // 4. Atualiza a tabela na tela automaticamente
+              if (typeof refreshLiveData === 'function') refreshLiveData();
+            });
         });
-    },
-    'Apagar Atividade?'
-  );
-}
+      },
+      'Apagar Atividade?'
+    );
+  }
 
 // ============ 6. MODO ESCURO ============
 function toggleDarkMode() {

@@ -423,9 +423,8 @@ window.renderFuncCharts = function () {
 };
 
 // =========================================================
-// GESTOR DE EQUIPES (VISÃO DO FUNCIONÁRIO)
+// TAREFAS DELEGADAS E RESPOSTAS (VISÃO DO FUNCIONÁRIO)
 // =========================================================
-
 window.setupFuncionarioTarefas = function() {
   loadTarefasRecebidas();
 
@@ -442,10 +441,8 @@ window.setupFuncionarioTarefas = function() {
       fileInput.addEventListener('change', function () {
           const files = Array.from(this.files);
           if (files.length > 3) return showToast('Máximo de 3 arquivos!', 'error');
-          
           arquivosSelecionados = [];
           fileListDisplay.innerHTML = '';
-
           for (let i = 0; i < files.length; i++) {
               if (files[i].size > 1 * 1024 * 1024) return showToast(`Arquivo muito pesado!`, 'error');
               arquivosSelecionados.push(files[i]);
@@ -458,72 +455,116 @@ window.setupFuncionarioTarefas = function() {
       e.preventDefault();
       const btn = novoForm.querySelector('button[type="submit"]');
       const originalText = btn.innerHTML;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entregando...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
       btn.disabled = true;
 
       const tarefaId = document.getElementById('entregarTarefaId').value;
       const observacoes = document.getElementById('entregarObservacoes').value;
       const tituloFinal = document.getElementById('entregarTitulo').value; 
 
-      db.collection('tarefas').doc(tarefaId).get().then(docSnap => {
-          if (!docSnap.exists) return showToast('Erro: Tarefa não encontrada', 'error');
-          
-          const tarefaOriginal = docSnap.data(); // Trazemos a tarefa original para pegar a categoria
-          
-          const finalizarTudo = (anexosNovos) => {
-              const p1 = db.collection('tarefas').doc(tarefaId).update({ 
-                  status: 'concluido',
-                  respostaFuncionario: observacoes, 
-                  attachments: anexosNovos 
+      const finalizarParaRevisao = (anexosNovos) => {
+          db.collection('tarefas').doc(tarefaId.toString()).update({ 
+              status: 'em_revisao',
+              respostaFuncionario: observacoes,
+              tituloEntrega: tituloFinal,
+              attachments: anexosNovos 
+          }).then(() => {
+              showToast('Entregue! Aguardando revisão do administrador.');
+              fecharModalTarefa();
+              fileListDisplay.innerHTML = '';
+              arquivosSelecionados = [];
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              loadTarefasRecebidas(); 
+          }).catch(err => {
+              console.error(err);
+              showToast('Erro ao entregar.', 'error');
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+          });
+      };
+
+      if (arquivosSelecionados.length > 0) {
+          const promessas = arquivosSelecionados.map((file) => {
+              return new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = function (evento) { resolve({ name: file.name, url: evento.target.result }); };
+                  reader.readAsDataURL(file);
               });
+          });
+          Promise.all(promessas).then(anexos => finalizarParaRevisao(anexos));
+      } else {
+          finalizarParaRevisao([]);
+      }
+  });
+};
 
-              const idAtividade = Date.now(); 
-              const hoje = new Date();
-              const dataRelatorio = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+window.loadTarefasRecebidas = function() {
+  const container = document.getElementById('listaTarefasFuncionario');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.6;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando tarefas...</div>';
 
-              const novaAtividade = {
-                  id: idAtividade,
-                  companyId: currentUser.companyId,
-                  userId: currentUser.id,
-                  date: dataRelatorio, 
-                  category: tarefaOriginal.category || 'Tarefa Delegada', // <-- AGORA USA A CATEGORIA DO ADMIN
-                  title: tituloFinal, 
-                  description: observacoes || 'Tarefa concluída sem observações.', 
-                  status: 'concluido',
-                  createdAt: new Date().toISOString(),
-                  attachments: anexosNovos 
-              };
+  db.collection('tarefas').where('userId', '==', currentUser.id).get()
+  .then((querySnapshot) => {
+      if (querySnapshot.empty) {
+          container.innerHTML = '<div style="text-align:center; padding: 20px; background: var(--color-bg-primary); border-radius: 8px;">Nenhuma tarefa pendente. Você está em dia! 🎉</div>';
+          return;
+      }
 
-              const p2 = db.collection('atividades').doc(idAtividade.toString()).set(novaAtividade);
-
-              Promise.all([p1, p2]).then(() => {
-                  showToast('Excelente! Tarefa concluída e registrada!');
-                  fecharModalTarefa();
-                  fileListDisplay.innerHTML = '';
-                  arquivosSelecionados = [];
-                  btn.innerHTML = originalText;
-                  btn.disabled = false;
-                  loadTarefasRecebidas(); 
-              }).catch(err => {
-                  showToast('Erro ao entregar.', 'error');
-                  btn.innerHTML = originalText;
-                  btn.disabled = false;
-              });
-          };
-
-          if (arquivosSelecionados.length > 0) {
-              const promessas = arquivosSelecionados.map((file) => {
-                  return new Promise((resolve) => {
-                      const reader = new FileReader();
-                      reader.onload = function (evento) { resolve({ name: file.name, url: evento.target.result }); };
-                      reader.readAsDataURL(file);
-                  });
-              });
-              Promise.all(promessas).then(anexos => finalizarTudo(anexos));
-          } else {
-              finalizarTudo([]);
-          }
+      let lista = [];
+      querySnapshot.forEach(doc => lista.push(doc.data()));
+      
+      lista.sort((a, b) => {
+          const order = { 'pendente': 1, 'em_revisao': 2, 'concluido': 3 };
+          if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
+          return new Date(b.createdAt) - new Date(a.createdAt);
       });
+
+      let html = `<div style="display: grid; gap: 15px;">`;
+
+      lista.forEach(t => {
+          const dataFormatada = new Date(t.createdAt).toLocaleDateString('pt-BR');
+          const admin = users.find(u => u.id === t.senderId);
+          const nomeAdmin = admin ? admin.name : 'Administrador';
+
+          const pendente = t.status === 'pendente';
+          const emRevisao = t.status === 'em_revisao';
+          
+          let corBorda = 'border-left: 4px solid var(--color-success);'; 
+          let badge = `<span class="badge" style="background:#dcfce7; color:#166534;">Concluída & Aprovada</span>`;
+          
+          if (pendente) {
+              corBorda = t.feedbackAdmin ? 'border-left: 4px solid var(--color-danger);' : 'border-left: 4px solid var(--color-warning);';
+              badge = t.feedbackAdmin 
+                  ? `<span class="badge" style="background:#fee2e2; color:#991b1b;">Devolvida c/ Erro</span>` 
+                  : `<span class="badge" style="background:#fef9c3; color:#854d0e;">Pendente</span>`;
+          } else if (emRevisao) {
+              corBorda = 'border-left: 4px solid var(--color-info);';
+              badge = `<span class="badge" style="background:#dbeafe; color:#1e40af;">Em Revisão</span>`;
+          }
+
+          html += `
+          <div class="card" style="padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; ${corBorda}">
+              <div style="flex: 1;">
+                  <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px;">De: ${nomeAdmin} • ${dataFormatada}</div>
+                  <h4 style="margin: 0 0 5px 0;">${t.title}</h4>
+                  ${badge}
+              </div>
+              <div>
+                  ${pendente
+                      ? `<button class="btn btn-primary btn-small" onclick="abrirModalTarefa('${t.id}')"><i class="fa-solid fa-reply"></i> ${t.feedbackAdmin ? 'Ver Erro e Reenviar' : 'Abrir & Responder'}</button>`
+                      : emRevisao 
+                          ? `<button class="btn btn-info btn-small" onclick="abrirModalTarefa('${t.id}')" style="background: var(--color-info); color: white; border: none;"><i class="fa-solid fa-pen"></i> Editar Entrega</button>`
+                          : `<button class="btn btn-secondary btn-small" disabled><i class="fa-solid fa-check-double"></i> Aprovada</button>`
+                  }
+              </div>
+          </div>`;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+  }).catch(err => {
+      container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--color-danger);">Erro de conexão.</div>';
   });
 };
 
@@ -538,8 +579,31 @@ window.abrirModalTarefa = function(idTarefa) {
       document.getElementById('modalTarefaDescricao').textContent = t.description;
       document.getElementById('entregarTarefaId').value = t.id;
       
-      // Pré-preenche o título da entrega com o título original para facilitar
-      document.getElementById('entregarTitulo').value = t.title; 
+      document.getElementById('entregarTitulo').value = t.tituloEntrega || t.title; 
+      document.getElementById('entregarObservacoes').value = t.respostaFuncionario || '';
+
+      const boxFeedback = document.getElementById('boxFeedbackAdmin');
+        const txtFeedback = document.getElementById('textoFeedbackAdmin');
+        const boxAnexosFeedback = document.getElementById('anexosFeedbackAdmin'); // Captura a nova Div
+
+        if (t.feedbackAdmin && boxFeedback && txtFeedback) {
+            txtFeedback.textContent = t.feedbackAdmin;
+            
+            // Renderiza os anexos do Admin (se houver) com botões de download vermelhos
+            if (t.feedbackAttachments && t.feedbackAttachments.length > 0 && boxAnexosFeedback) {
+                let anexosHtml = '';
+                t.feedbackAttachments.forEach(an => {
+                    anexosHtml += `<a href="${an.url}" download="${an.name}" class="badge" style="background: #fca5a5; color: #7f1d1d; text-decoration: none; display: flex; align-items: center; gap: 5px; padding: 6px 12px; border: 1px solid #f87171;"><i class="fa-solid fa-download"></i> ${an.name}</a>`;
+                });
+                boxAnexosFeedback.innerHTML = anexosHtml;
+            } else if (boxAnexosFeedback) {
+                boxAnexosFeedback.innerHTML = ''; // Limpa se não houver anexos
+            }
+
+            boxFeedback.style.display = 'block';
+        } else if (boxFeedback) {
+            boxFeedback.style.display = 'none';
+        }
 
       const boxAnexos = document.getElementById('modalTarefaAnexosAdmin');
       if (t.attachments && t.attachments.length > 0) {
@@ -553,99 +617,6 @@ window.abrirModalTarefa = function(idTarefa) {
           boxAnexos.innerHTML = '';
       }
 
-      document.getElementById('formEntregarTarefa').reset();
-      document.getElementById('entregarArquivosLista').innerHTML = '';
-      document.getElementById('modalResponderTarefa').classList.remove('hidden');
-  });
-};
-
-window.loadTarefasRecebidas = function() {
-  const container = document.getElementById('listaTarefasFuncionario');
-  if (!container) return;
-  container.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.6;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando tarefas...</div>';
-
-  // 🚀 OTIMIZAÇÃO: Filtro único (muito mais rápido) e com tratamento de erro
-  db.collection('tarefas')
-    .where('userId', '==', currentUser.id)
-    .get()
-    .then((querySnapshot) => {
-        if (querySnapshot.empty) {
-            container.innerHTML = '<div style="text-align:center; padding: 20px; background: var(--color-bg-primary); border-radius: 8px;">Nenhuma tarefa pendente. Você está em dia! 🎉</div>';
-            return;
-        }
-
-        let lista = [];
-        querySnapshot.forEach(doc => lista.push(doc.data()));
-        
-        // Coloca as pendentes no topo
-        lista.sort((a, b) => {
-            if (a.status === 'pendente' && b.status === 'concluido') return -1;
-            if (a.status === 'concluido' && b.status === 'pendente') return 1;
-            return new Date(b.createdAt) - new Date(a.createdAt);
-        });
-
-        let html = `<div style="display: grid; gap: 15px;">`;
-
-        lista.forEach(t => {
-            const dataFormatada = new Date(t.createdAt).toLocaleDateString('pt-BR');
-            const admin = users.find(u => u.id === t.senderId);
-            const nomeAdmin = admin ? admin.name : 'Administrador';
-
-            const pendente = t.status === 'pendente';
-            const corBorda = pendente ? 'border-left: 4px solid var(--color-warning);' : 'border-left: 4px solid var(--color-success);';
-            const badge = pendente
-                ? `<span class="badge" style="background:#fef9c3; color:#854d0e;">Pendente</span>`
-                : `<span class="badge" style="background:#dcfce7; color:#166534;">Concluída</span>`;
-
-            html += `
-            <div class="card" style="padding: 15px; display: flex; justify-content: space-between; align-items: center; ${corBorda}">
-                <div>
-                    <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px;">De: ${nomeAdmin} • ${dataFormatada}</div>
-                    <h4 style="margin: 0 0 5px 0;">${t.title}</h4>
-                    ${badge}
-                </div>
-                <div>
-                    ${pendente
-                        ? `<button class="btn btn-primary btn-small" onclick="abrirModalTarefa('${t.id}')"><i class="fa-solid fa-reply"></i> Abrir & Responder</button>`
-                        : `<button class="btn btn-secondary btn-small" disabled><i class="fa-solid fa-check-double"></i> Entregue</button>`
-                    }
-                </div>
-            </div>`;
-        });
-
-        html += `</div>`;
-        container.innerHTML = html;
-    })
-    .catch((err) => {
-        console.error("Erro ao buscar tarefas:", err);
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--color-danger);">Erro de conexão ao carregar as tarefas. Tente recarregar a página.</div>';
-    });
-};
-
-window.abrirModalTarefa = function(idTarefa) {
-  db.collection('tarefas').doc(idTarefa.toString()).get().then(docSnap => {
-      if (!docSnap.exists) return;
-      const t = docSnap.data();
-
-      const admin = users.find(u => u.id === t.senderId);
-      document.getElementById('modalTarefaRemetente').textContent = admin ? admin.name : 'Administrador';
-      document.getElementById('modalTarefaTitulo').textContent = t.title;
-      document.getElementById('modalTarefaDescricao').textContent = t.description;
-      document.getElementById('entregarTarefaId').value = t.id;
-
-      const boxAnexos = document.getElementById('modalTarefaAnexosAdmin');
-      if (t.attachments && t.attachments.length > 0) {
-          let anexosHtml = '<strong style="font-size:14px; display:block; margin-bottom: 5px;">Arquivos para Baixar:</strong><div style="display: flex; gap: 10px; flex-wrap: wrap;">';
-          t.attachments.forEach(an => {
-              anexosHtml += `<a href="${an.url}" download="${an.name}" class="badge" style="background: var(--color-bg-secondary); color: var(--color-primary); text-decoration: none; display: flex; align-items: center; gap: 5px; padding: 6px 12px; border: 1px solid var(--color-border);"><i class="fa-solid fa-download"></i> ${an.name}</a>`;
-          });
-          anexosHtml += '</div>';
-          boxAnexos.innerHTML = anexosHtml;
-      } else {
-          boxAnexos.innerHTML = '';
-      }
-
-      document.getElementById('formEntregarTarefa').reset();
       document.getElementById('entregarArquivosLista').innerHTML = '';
       document.getElementById('modalResponderTarefa').classList.remove('hidden');
   });
@@ -657,40 +628,33 @@ window.fecharModalTarefa = function() {
 
 // ============ CONFIGURAÇÕES DE PERFIL ============
 window.setupFuncSettingsForms = function() {
-    const profForm = document.getElementById('empProfileForm');
-    if (profForm) {
-        profForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const newName = document.getElementById('empProfileName').value.trim();
-            const newPass = document.getElementById('empProfilePassword').value;
-            const btn = profForm.querySelector('button');
-            const originalText = btn ? btn.innerHTML : '';
-            if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Atualizando...';
+  const profForm = document.getElementById('empProfileForm');
+  if (profForm) {
+      profForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          const newName = document.getElementById('empProfileName').value.trim();
+          const newPass = document.getElementById('empProfilePassword').value;
+          const btn = profForm.querySelector('button');
+          const originalText = btn ? btn.innerHTML : '';
+          if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Atualizando...';
 
-            let updates = {};
-            if (newName) updates.name = newName;
-            if (newPass) updates.password = newPass;
+          let updates = {};
+          if (newName) updates.name = newName;
+          if (newPass) updates.password = newPass;
 
-            db.collection('usuarios')
-                .doc(currentUser.id.toString())
-                .update(updates)
-                .then(() => {
-                    if (newName) {
-                        currentUser.name = newName;
-                        const sidebarName = document.getElementById('sidebarEmployeeName');
-                        if (sidebarName) sidebarName.textContent = currentUser.name.split(' ')[0];
-                        const avatar = document.getElementById('employeeAvatar');
-                        if (avatar) avatar.textContent = currentUser.name.charAt(0).toUpperCase();
-                    }
-                    const passInput = document.getElementById('empProfilePassword');
-                    if (passInput) passInput.value = '';
-                    showNotice('empProfileAlert', 'Perfil atualizado com sucesso!', 'success');
-                    if (btn) btn.innerHTML = originalText || '<i class="fa-solid fa-floppy-disk"></i> Atualizar';
-                })
-                .catch(err => {
-                    showNotice('empProfileAlert', 'Erro ao atualizar perfil.', 'error');
-                    if (btn) btn.innerHTML = originalText || '<i class="fa-solid fa-floppy-disk"></i> Atualizar';
-                });
-        });
-    }
+          db.collection('usuarios').doc(currentUser.id.toString()).update(updates).then(() => {
+              if (newName) {
+                  currentUser.name = newName;
+                  const sidebarName = document.getElementById('sidebarEmployeeName');
+                  if (sidebarName) sidebarName.textContent = currentUser.name.split(' ')[0];
+                  const avatar = document.getElementById('employeeAvatar');
+                  if (avatar) avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+              }
+              const passInput = document.getElementById('empProfilePassword');
+              if (passInput) passInput.value = '';
+              showNotice('empProfileAlert', 'Perfil atualizado!', 'success');
+              if (btn) btn.innerHTML = originalText || '<i class="fa-solid fa-floppy-disk"></i> Atualizar';
+          });
+      });
+  }
 };
