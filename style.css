@@ -2112,3 +2112,32 @@ body.dark-mode {
   --color-text-secondary: #94a3b8;
   --color-border: #334155;
 }
+
+/* ======================================================= */
+/* CORREÇÃO DO TOQUE E SCROLL (MOBILE PWA TOUCH FIX)       */
+/* ======================================================= */
+
+/* 1. Restaura a fluidez do Scroll no iOS e Android e evita travamentos */
+html, body {
+  overscroll-behavior-y: auto !important; 
+  -webkit-overflow-scrolling: touch !important; 
+}
+
+/* 2. Resposta imediata! Remove o delay de 300ms nos cliques */
+button, a, input, select, textarea, .nav-item, .btn-icon-only, .file-drop-area, .green-dot-item, .tab-btn {
+  touch-action: manipulation !important; 
+  -webkit-tap-highlight-color: transparent !important; /* Remove o "piscar cinza" no Android */
+}
+
+/* 3. Garante que elementos escondidos (como o splash screen) não roubem os cliques da tela */
+.hidden {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+#splash-screen.hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  display: none !important;
+}
