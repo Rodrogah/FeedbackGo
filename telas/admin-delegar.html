@@ -1,0 +1,87 @@
+<div class="header-content page-header">
+    <h1 class="page-title"><i class="fa-solid fa-paper-plane"></i> Delegar Tarefas</h1>
+</div>
+
+<div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--color-border); padding-bottom: 15px;">
+    <button class="btn btn-small nav-delegar-tab" onclick="openDelegarTab('tabNovaTarefa', this)" style="background: var(--color-primary); color: white; width: auto;">
+        <i class="fa-solid fa-plus"></i> Nova Tarefa
+    </button>
+    <button class="btn btn-small nav-delegar-tab" onclick="openDelegarTab('tabTarefasEnviadas', this)" style="background: transparent; color: var(--color-text-secondary); border: 1px solid var(--color-border); width: auto;">
+        <i class="fa-solid fa-list-check"></i> Tarefas Enviadas
+    </button>
+</div>
+
+<div class="content-area">
+    <div id="tabNovaTarefa" class="delegar-tab-content" style="display: block;">
+        <div class="card" style="max-width: 800px; margin: 0 auto;">
+            <form id="formDelegarTarefa">
+                <div class="form-group">
+                    <label>Categoria da Tarefa</label>
+                    <select id="delegarCategoria" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Título da Tarefa</label>
+                    <input type="text" id="delegarTitulo" class="form-control" required placeholder="Ex: Analisar planilhas de Janeiro">
+                </div>
+
+                <div class="form-group">
+                    <label>Instruções / Descrição</label>
+                    <textarea id="delegarDescricao" class="form-control" rows="3" required placeholder="O que deve ser feito?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Arquivos para os funcionários (Opcional - Máx: 3)</label>
+                    <div class="file-drop-area">
+                        <span class="fake-btn">Escolher arquivos</span>
+                        <span class="file-msg">ou arraste e solte aqui</span>
+                        <input type="file" id="delegarArquivos" multiple class="file-input">
+                    </div>
+                    <div id="delegarArquivosLista" style="margin-top: 10px;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Atribuir a quem? (Selecione um ou mais)</label>
+                    <div id="listaCheckFuncionarios" style="border: 1px solid var(--color-border); border-radius: 8px; padding: 15px; max-height: 250px; overflow-y: auto; background: var(--color-bg-secondary);">
+                        <div style="text-align:center; opacity:0.5;"><i class="fa-solid fa-spinner fa-spin"></i> Carregando equipe...</div>
+                    </div>
+                </div>
+
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary btn-large">
+                        <i class="fa-solid fa-paper-plane"></i> Enviar Tarefa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="tabTarefasEnviadas" class="delegar-tab-content" style="display: none;">
+        <div class="card">
+            <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-list-check"></i> Acompanhar Tarefas Enviadas</h3>
+            <div id="tabelaTarefasEnviadas"></div>
+        </div>
+    </div>
+</div>
+
+<div id="modalDetalhesTarefa" class="modal-overlay hidden" style="z-index: 10000;">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-clipboard-check"></i> Detalhes da Entrega</h2>
+            <button class="close-modal" onclick="fecharDetalhesTarefa()">&times;</button>
+        </div>
+        
+        <h3 id="detalheTarefaTitulo" style="margin-bottom: 5px;"></h3>
+        <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 15px;">Entregue por: <strong id="detalheTarefaFunc" style="color: var(--color-text-primary);"></strong></p>
+        
+        <div style="background: var(--color-bg-secondary); padding: 15px; border-radius: 8px; border: 1px solid var(--color-border); margin-bottom: 15px;">
+            <strong style="display: block; margin-bottom: 5px; font-size: 13px;">Mensagem do Colaborador:</strong>
+            <p id="detalheTarefaResposta" style="white-space: pre-wrap; font-size: 14px; margin: 0; color: var(--color-text-primary);"></p>
+        </div>
+
+        <div id="detalheTarefaAnexos" style="margin-bottom: 20px;"></div>
+
+        <div style="text-align: right; margin-top: 20px;">
+            <button class="btn btn-secondary btn-small" onclick="fecharDetalhesTarefa()">Fechar Detalhes</button>
+        </div>
+    </div>
+</div>

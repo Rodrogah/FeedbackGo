@@ -35,21 +35,6 @@
         emailjs.init('IF5hubbrNsxc_m7Qx');
       })();
     </script>
-
-<div id="pull-to-refresh" class="ptr-element">
-  <div class="ptr-bubble">
-      <div class="ptr-icon"><i class="fa-solid fa-arrow-down"></i></div>
-      <div class="ptr-spinner" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
-  </div>
-</div>
-
-<script>
-  (function() {
-      const temaSalvo = localStorage.getItem('feedbackgo_theme');
-      if (temaSalvo === 'dark') {
-          document.body.classList.add('dark-mode');
-      }
-  })();
 </script>
 
 <script>
@@ -409,7 +394,9 @@ setTimeout(function() {
       <aside class="sidebar">
         <div class="sidebar-logo">
           <div style="display: flex; align-items: center; gap: 15px;">
-            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+              <i class="fa-solid fa-bars"></i>
+          </button>
             <h2 style="display: flex; align-items: center; gap: 10px;">
               <i class="fa-solid fa-paper-plane"></i> FeedbackGo
             </h2>
@@ -425,6 +412,9 @@ setTimeout(function() {
           >
           <a class="nav-item" onclick="showEmployeeSection('history')"
             ><i class="fa-solid fa-clock-rotate-left"></i> Meu Histórico</a
+          >
+          <a class="nav-item" onclick="showEmployeeSection('tarefas-recebidas')">
+            <i class="fa-solid fa-inbox"></i> Tarefas Recebidas</a
           >
           <a class="nav-item" onclick="showEmployeeSection('settings')"
             ><i class="fa-solid fa-gear"></i> Minhas Configurações</a
@@ -452,7 +442,9 @@ setTimeout(function() {
       <aside class="sidebar">
         <div class="sidebar-logo">
           <div style="display: flex; align-items: center; gap: 15px;">
-            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+              <i class="fa-solid fa-bars"></i>
+          </button>
             <h2 style="display: flex; align-items: center; gap: 10px;">
               <i class="fa-solid fa-paper-plane"></i> FeedbackGo
             </h2>
@@ -477,6 +469,9 @@ setTimeout(function() {
           >
           <a class="nav-item" onclick="showAdminSection('reports')"
             ><i class="fa-solid fa-chart-line"></i> Relatórios</a
+          >
+          <a class="nav-item" onclick="showAdminSection('delegar')">
+            <i class="fa-solid fa-paper-plane"></i> Delegar Tarefas</a
           >
           <a class="nav-item" onclick="showAdminSection('settings')"
             ><i class="fa-solid fa-gear"></i> Configurações</a
@@ -544,6 +539,76 @@ setTimeout(function() {
         </div>
       </div>
     </div>
+
+    <div id="modalResponderTarefa" class="modal-overlay hidden" style="z-index: 99999;">
+      <div class="modal-content teams-modal">
+          <div class="teams-modal-header">
+              <div class="teams-header-info">
+                  <div class="icon-circle"><i class="fa-solid fa-list-check"></i></div>
+                  <div>
+                      <h2 id="modalTarefaTitulo">Carregando...</h2>
+                      <p class="subtitle">Enviado por: <strong id="modalTarefaRemetente">...</strong></p>
+                  </div>
+              </div>
+              <button class="close-modal" onclick="fecharModalTarefa()">&times;</button>
+          </div>
+
+          <div class="teams-modal-body">
+              
+              <div class="teams-main-column">
+                  <div class="teams-section">
+                      <h3><i class="fa-solid fa-align-left"></i> Instruções</h3>
+                      <div class="instruction-box"><p id="modalTarefaDescricao"></p></div>
+                  </div>
+
+                  <div class="teams-section">
+                      <h3><i class="fa-solid fa-paperclip"></i> Materiais de Referência</h3>
+                      <div id="modalTarefaAnexosAdmin" class="teams-attachment-grid"></div>
+                  </div>
+
+                  <div class="teams-section">
+                      <h3><i class="fa-solid fa-cloud-arrow-up"></i> Sua Entrega</h3>
+                      <form id="formEntregarTarefa">
+                          <input type="hidden" id="entregarTarefaId">
+                          
+                          <div class="form-group">
+                              <label>Comentários (Opcional)</label>
+                              <textarea id="entregarObservacoes" class="form-control" rows="3" placeholder="Adicione observações sobre o seu trabalho..."></textarea>
+                          </div>
+                          
+                          <div class="form-group">
+                              <label>Arquivos de Resposta (Máx. 3)</label>
+                              <div class="file-drop-area">
+                                  <span class="fake-btn">Escolher arquivos</span>
+                                  <span class="file-msg">ou arraste e solte aqui</span>
+                                  <input type="file" id="entregarArquivos" multiple class="file-input">
+                              </div>
+                              <div id="entregarArquivosLista" class="custom-file-list"></div>
+                          </div>
+                          
+                          <div style="text-align: right; margin-top: 25px; padding-top: 15px; border-top: 1px dashed var(--color-border);">
+                              <button type="button" class="btn btn-secondary btn-small" onclick="fecharModalTarefa()" style="margin-right: 10px;">Cancelar</button>
+                              <button type="submit" class="btn btn-success btn-small">
+                                  <i class="fa-solid fa-check"></i> Entregar Atividade
+                              </button>
+                          </div>
+                      </form>
+                  </div>
+              </div>
+
+              <div class="teams-sidebar">
+                  <div class="sidebar-block">
+                      <label>Status da Missão</label>
+                      <div id="modalTarefaStatusBadge">...</div>
+                  </div>
+                  <div class="sidebar-block">
+                      <label>Data de Recebimento</label>
+                      <p id="modalTarefaData"></p>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
 
     <div id="toast-container"></div>
 

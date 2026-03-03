@@ -44,6 +44,7 @@ async function showAdminSection(sec) {
       teams: 'admin-equipes.html',
       reports: 'admin-relatorios.html',
       settings: 'admin-configuracoes.html',
+      delegar: 'admin-delegar.html'
     };
     
     const resposta = await fetch(`./telas/${rotas[sec]}`);
@@ -119,6 +120,18 @@ async function showAdminSection(sec) {
       if (profileInput) profileInput.value = currentUser.name;
       loadCategories(c);
       setupAdminSettingsForms();
+
+    } else if (sec === 'delegar') {
+      // Carrega as categorias no select
+      const c = companies.find((x) => x.id === currentUser.companyId);
+      const catEl = document.getElementById('delegarCategoria');
+      if (catEl) {
+          catEl.innerHTML = (c.categories || defaultCategories)
+              .map((cat) => `<option value="${cat}">${cat}</option>`)
+              .join('');
+      }
+      setupAdminDelegarForm();
+      loadTarefasEnviadas();
     }
   } catch (err) {
     palco.innerHTML = `<div class="alert alert-error">Erro ao carregar ecrã: ${err.message}</div>`;
@@ -930,3 +943,290 @@ if (editUserForm) {
       });
   });
 }
+
+// =========================================================
+// SISTEMA DE DELEGAÇÃO DE TAREFAS (GESTOR DE EQUIPES)
+// =========================================================
+
+function setupAdminDelegarForm() {
+  const container = document.getElementById('listaCheckFuncionarios');
+  if (!container) return;
+
+  const funcDaEmpresa = users.filter(u => u.companyId === currentUser.companyId && u.active && u.id !== currentUser.id);
+  
+  if (funcDaEmpresa.length === 0) {
+      container.innerHTML = '<p style="opacity: 0.6; text-align: center; padding: 10px;">Nenhum colaborador encontrado.</p>';
+  } else {
+      container.innerHTML = funcDaEmpresa.map(u => `
+          <label style="display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-bottom: 1px solid var(--color-border); margin:0;">
+              <input type="checkbox" name="funcDelegado" value="${u.id}" style="width: 18px; height: 18px; cursor: pointer;">
+              <span style="font-size: 14px;"><strong>${u.name}</strong> <small style="opacity:0.7">(${u.team || 'Sem Equipe'})</small></span>
+          </label>
+      `).join('');
+  }
+
+  const form = document.getElementById('formDelegarTarefa');
+  if (!form) return;
+  const novoForm = form.cloneNode(true);
+  form.parentNode.replaceChild(novoForm, form);
+
+  let arquivosSelecionados = [];
+  const fileInput = novoForm.querySelector('#delegarArquivos');
+  const fileListDisplay = novoForm.querySelector('#delegarArquivosLista');
+
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      const files = Array.from(this.files);
+      if (files.length > 3) {
+        showToast('Máximo de 3 arquivos!', 'error');
+        this.value = '';
+        fileListDisplay.innerHTML = '';
+        arquivosSelecionados = [];
+        return;
+      }
+      arquivosSelecionados = [];
+      fileListDisplay.innerHTML = '';
+
+      for (let i = 0; i < files.length; i++) {
+        if (files[i].size > 1 * 1024 * 1024) {
+          showToast(`O arquivo ${files[i].name} é muito pesado (Máx 1MB)!`, 'error');
+          this.value = '';
+          fileListDisplay.innerHTML = '';
+          arquivosSelecionados = [];
+          return;
+        }
+        arquivosSelecionados.push(files[i]);
+        fileListDisplay.innerHTML += `<div class="custom-file-item" style="font-size:12px; padding:5px 0;"><i class="fa-solid fa-file-lines" style="color: var(--color-info);"></i> ${files[i].name}</div>`;
+      }
+    });
+  }
+
+  novoForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      
+      const checkboxes = novoForm.querySelectorAll('input[name="funcDelegado"]:checked');
+      if (checkboxes.length === 0) {
+          return showToast('Selecione pelo menos um funcionário!', 'error');
+      }
+
+      const btn = novoForm.querySelector('button[type="submit"]');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A Enviar...';
+      btn.disabled = true;
+
+      const titulo = document.getElementById('delegarTitulo').value;
+      const descricao = document.getElementById('delegarDescricao').value;
+      const categoria = document.getElementById('delegarCategoria').value; // <-- CAPTURA A CATEGORIA
+      const dataAtual = new Date().toISOString();
+
+      const dispararTarefas = (anexosProntos) => {
+          let promessasFirebase = [];
+          
+          checkboxes.forEach((box, index) => {
+              const userId = parseInt(box.value);
+              const tarefaId = Date.now() + index; 
+              
+              const novaTarefa = {
+                  id: tarefaId,
+                  companyId: currentUser.companyId,
+                  senderId: currentUser.id,
+                  userId: userId,
+                  title: titulo,
+                  description: descricao,
+                  category: categoria, // <-- SALVA A CATEGORIA NO BANCO
+                  attachments: anexosProntos || [],
+                  status: 'pendente', 
+                  createdAt: dataAtual
+              };
+
+              promessasFirebase.push(db.collection('tarefas').doc(tarefaId.toString()).set(novaTarefa));
+          });
+
+          Promise.all(promessasFirebase).then(() => {
+              showToast('Tarefas delegadas com sucesso!');
+              novoForm.reset();
+              fileListDisplay.innerHTML = ''; 
+              arquivosSelecionados = []; 
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              loadTarefasEnviadas(); 
+          }).catch((err) => {
+              console.error(err);
+              showToast('Erro ao enviar.', 'error');
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+          });
+      };
+
+      if (arquivosSelecionados && arquivosSelecionados.length > 0) {
+          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Anexando...';
+          const promessasDeArquivos = arquivosSelecionados.map((file) => {
+              return new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = function (evento) {
+                      resolve({ name: file.name, url: evento.target.result });
+                  };
+                  reader.readAsDataURL(file);
+              });
+          });
+
+          Promise.all(promessasDeArquivos).then((anexos) => dispararTarefas(anexos));
+      } else {
+          dispararTarefas([]); 
+      }
+  });
+}
+
+// 4. Carregar a Tabela de Acompanhamento (Painel do Admin)
+function loadTarefasEnviadas() {
+  const container = document.getElementById('tabelaTarefasEnviadas');
+  if (!container) return;
+
+  container.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.6;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando tarefas...</div>';
+
+  db.collection('tarefas')
+    .where('senderId', '==', currentUser.id)
+    .get()
+    .then((querySnapshot) => {
+        if (querySnapshot.empty) {
+            container.innerHTML = '<div style="text-align:center; padding: 20px; background: var(--color-bg-primary); border-radius: 8px;">Você ainda não enviou nenhuma tarefa.</div>';
+            return;
+        }
+
+        let lista = [];
+        querySnapshot.forEach(doc => lista.push(doc.data()));
+        
+        lista.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        let html = `<div class="table-container"><table>
+            <thead><tr><th>Data</th><th>Para Quem</th><th>Categoria</th><th>Tarefa</th><th>Status</th><th>Ações</th></tr></thead><tbody>`;
+        
+        lista.forEach(t => {
+            const func = users.find(u => u.id === t.userId);
+            const nomeFunc = func ? func.name : 'Colaborador Removido';
+            const dataFormatada = new Date(t.createdAt).toLocaleDateString('pt-BR');
+            
+            const badgeClass = t.status === 'concluido' ? 'badge-concluido' : 'badge-pendente';
+            const badgeText = t.status === 'concluido' ? 'Entregue' : 'Pendente';
+            
+            // Gera a cor visual da categoria
+            const categoriaBadge = `<span class="badge cat-badge-dynamic" style="${getCategoryStyleString(t.category || 'Geral')}">${t.category || 'Geral'}</span>`;
+
+            html += `<tr>
+                <td>${dataFormatada}</td>
+                <td><strong>${nomeFunc}</strong></td>
+                <td>${categoriaBadge}</td>
+                <td>${t.title}</td>
+                <td><span class="badge ${badgeClass}" style="${t.status === 'concluido' ? 'background:#dcfce7; color:#166534;' : 'background:#fef9c3; color:#854d0e;'}">${badgeText}</span></td>
+                <td>
+                    ${t.status === 'concluido' ? `<button onclick="abrirDetalhesTarefa('${t.id}')" class="btn-icon-only edit" title="Ver Entrega" style="color: var(--color-info);"><i class="fa-solid fa-eye"></i></button>` : ''}
+                    <button onclick="apagarTarefaDelegada('${t.id}')" class="btn-icon-only delete" title="Apagar Tarefa"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
+    })
+    .catch((err) => {
+        console.error("Erro no acompanhamento:", err);
+        container.innerHTML = '<p style="color: var(--color-danger); text-align:center;">Erro ao carregar o acompanhamento de tarefas.</p>';
+    });
+}
+
+// ==========================================
+// JANELA DE DETALHES DA TAREFA FINALIZADA
+// ==========================================
+window.abrirDetalhesTarefa = function(idTarefa) {
+  db.collection('tarefas').doc(idTarefa.toString()).get().then(docSnap => {
+      if (!docSnap.exists) return;
+      const t = docSnap.data();
+      const func = users.find(u => u.id === t.userId);
+      
+      document.getElementById('detalheTarefaTitulo').textContent = t.title;
+      document.getElementById('detalheTarefaFunc').textContent = func ? func.name : 'Colaborador';
+      document.getElementById('detalheTarefaResposta').textContent = t.respostaFuncionario || 'Nenhuma mensagem escrita na entrega.';
+      
+      const boxAnexos = document.getElementById('detalheTarefaAnexos');
+      if (t.attachments && t.attachments.length > 0) {
+          let html = '<strong style="font-size:13px; display:block; margin-bottom: 5px;">Anexos da Entrega (Baixar):</strong><div style="display: flex; gap: 10px; flex-wrap: wrap;">';
+          t.attachments.forEach(an => {
+              html += `<a href="${an.url}" download="${an.name}" class="badge" style="background: var(--color-bg-secondary); color: var(--color-primary); text-decoration: none; display: flex; align-items: center; gap: 5px; padding: 6px 12px; border: 1px solid var(--color-border);"><i class="fa-solid fa-download"></i> ${an.name}</a>`;
+          });
+          html += '</div>';
+          boxAnexos.innerHTML = html;
+      } else {
+          boxAnexos.innerHTML = '<span style="font-size: 13px; color: var(--color-text-secondary);"><i class="fa-solid fa-file-excel"></i> Nenhum anexo de resposta enviado pelo colaborador.</span>';
+      }
+      
+      document.getElementById('modalDetalhesTarefa').classList.remove('hidden');
+  });
+};
+
+window.fecharDetalhesTarefa = function() {
+  document.getElementById('modalDetalhesTarefa').classList.add('hidden');
+};
+// Função para trocar abas internas no Gestor de Equipes
+window.switchDelegarTab = function(tabId, btn) {
+  // 1. Remove classes ativas de todas as seções e botões
+  document.querySelectorAll('.delegar-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  
+  // 2. Ativa a aba selecionada
+  const target = document.getElementById(tabId);
+  if(target) target.classList.add('active');
+  
+  // 3. Ativa o botão selecionado
+  if(btn) btn.classList.add('active');
+  
+  // 4. Se clicar em Status, carrega os dados atualizados
+  if (tabId === 'abaStatus') {
+      loadTarefasEnviadas();
+  }
+};
+
+// =========================================================
+// NAVEGAÇÃO E AÇÕES DA TELA DE DELEGAR
+// =========================================================
+window.openDelegarTab = function(tabId, btn) {
+  // 1. Esconde as duas abas
+  document.querySelectorAll('.delegar-tab-content').forEach(tab => tab.style.display = 'none');
+  
+  // 2. Remove o visual de "ativo" de todos os botões das abas
+  document.querySelectorAll('.nav-delegar-tab').forEach(b => {
+      b.style.background = 'transparent';
+      b.style.color = 'var(--color-text-secondary)';
+      b.style.border = '1px solid var(--color-border)';
+  });
+
+  // 3. Mostra a aba clicada
+  document.getElementById(tabId).style.display = 'block';
+
+  // 4. Pinta o botão clicado
+  btn.style.background = 'var(--color-primary)';
+  btn.style.color = 'white';
+  btn.style.border = '1px solid var(--color-primary)';
+
+  // Recarrega a tabela se abrir a aba de enviadas
+  if(tabId === 'tabTarefasEnviadas') {
+      loadTarefasEnviadas();
+  }
+};
+
+window.apagarTarefaDelegada = function(tarefaId) {
+  showConfirm(
+      'Tem certeza que deseja apagar esta tarefa? O colaborador não poderá mais vê-la ou respondê-la.',
+      () => {
+          db.collection('tarefas').doc(tarefaId.toString()).delete()
+          .then(() => {
+              showToast('Tarefa apagada com sucesso!');
+              loadTarefasEnviadas(); // Recarrega a tabela automaticamente
+          })
+          .catch(err => {
+              console.error('Erro ao apagar tarefa:', err);
+              showToast('Erro ao apagar tarefa.', 'error');
+          });
+      },
+      'Apagar Tarefa'
+  );
+};

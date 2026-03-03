@@ -451,7 +451,7 @@ function openHistoryModal(id) {
 
   const content = document.getElementById('historyContent');
   if (content) {
-    // 🏗️ INJEÇÃO DO HTML: Aqui criamos o seletor que faltava
+    // Aqui criamos o seletor que faltava
     content.innerHTML = `
       <div class="history-header-filter" style="margin-bottom: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
         <span style="font-size: 12px; opacity: 0.8;">Ordem:</span>

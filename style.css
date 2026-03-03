@@ -1620,17 +1620,495 @@ body.dark-mode .ptr-bubble { background: #334155; }
 
 /* ============ ANIMAÇÕES DE NAVEGAÇÃO ============ */
 .fade-entrar {
-  /* Usamos cubic-bezier para um movimento que começa rápido e trava suavemente no final */
   animation: transicaoTela 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 @keyframes transicaoTela {
   0% {
       opacity: 0;
-      transform: translateY(12px) scale(0.99);
+      /* Usar margin em vez de transform impede que o modal fique preso! */
+      margin-top: 15px; 
   }
   100% {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      margin-top: 0;
   }
+}
+
+/* 🚀 ESCONDE O MENU HAMBÚRGUER NO PC */
+.mobile-menu-toggle {
+  display: none !important;
+}
+
+/* 📱 MOSTRA APENAS NO CELULAR */
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+  }
+}
+
+/* Efeitos Premium para Tarefas */
+.task-premium-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+.selection-grid-container label:hover {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.selection-grid-container input[type="checkbox"]:checked + span {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+/* Loader discreto */
+.loader-placeholder {
+  text-align: center;
+  padding: 50px;
+  opacity: 0.6;
+  font-weight: 600;
+}
+
+/* Navegação por Abas Internas */
+.internal-tabs-nav {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 35px;
+  border-bottom: 2px solid var(--color-border);
+  padding-left: 10px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 5px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  position: relative;
+  transition: 0.3s;
+}
+
+.tab-btn.active {
+  color: var(--color-info);
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--color-info);
+  border-radius: 10px;
+}
+
+/* Visibilidade das Seções */
+.delegar-section { display: none; }
+.delegar-section.active { display: block; animation: fadeIn 0.4s ease; }
+
+/* Inputs Minimalistas */
+.form-control-minimal {
+  border: none !important;
+  border-bottom: 2px solid var(--color-border) !important;
+  border-radius: 0 !important;
+  padding: 15px 5px !important;
+  font-size: 16px !important;
+  background: transparent !important;
+}
+
+.form-control-minimal:focus {
+  border-bottom-color: var(--color-info) !important;
+  box-shadow: none !important;
+}
+
+.form-grid-spaced {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px; /* Espaço generoso entre colunas */
+  margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .form-grid-spaced { grid-template-columns: 1fr; gap: 30px; }
+}
+
+/* Container de Seleção com Bolinha Verde */
+.green-dot-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.green-dot-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.green-dot-item:hover {
+  border-color: var(--color-primary);
+}
+
+/* A Bolinha Verde */
+.dot {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e1;
+  border-radius: 50%;
+  position: relative;
+  transition: 0.3s;
+}
+
+/* Quando o input escondido for marcado, a bolinha ativa */
+input[name="funcDelegado"]:checked + .green-dot-item .dot {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+input[name="funcDelegado"]:checked + .green-dot-item .dot::after {
+  content: '\f00c'; /* ícone de check */
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 10px;
+  color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Esconde o checkbox original */
+.input-hidden {
+  display: none;
+}
+
+/* 🚀 Cards que respeitam o tema (Escuro/Claro) */
+.task-premium-card {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+/* 📱 Modal Amplo e Centralizado */
+#modalResponderTarefa .modal-content {
+  max-width: 850px !important; /* Mais largo para não ficar esmagado */
+  width: 95% !important;
+  background: var(--color-bg-secondary) !important;
+  border-radius: 20px !important;
+  padding: 40px !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+}
+
+/* Destaque para os Anexos do Admin */
+.admin-attachment-box {
+  background: rgba(59, 130, 246, 0.08) !important;
+  border: 2px dashed var(--color-info) !important;
+  padding: 20px !important;
+  border-radius: 12px !important;
+  margin: 20px 0 !important;
+}
+
+.internal-tabs-nav .tab-btn {
+  background: none; border: none; padding: 10px 20px; cursor: pointer;
+  color: var(--color-text-secondary); font-weight: 600;
+}
+.internal-tabs-nav .tab-btn.active {
+  color: var(--color-primary); border-bottom: 3px solid var(--color-primary);
+}
+
+.green-dot-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px; background: var(--color-bg-primary); 
+  border: 1px solid var(--color-border); border-radius: 8px; margin-bottom: 8px;
+}
+.dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #cbd5e1; }
+input[name="funcDelegado"]:checked + .green-dot-item .dot {
+  background: var(--color-success); border-color: var(--color-success);
+}
+
+/* 📱 Ajuste do Modal para Janela Larga */
+#modalResponderTarefa .modal-content {
+  max-width: 850px !important; width: 95%;
+  background: var(--color-bg-secondary) !important;
+}
+
+/* Teams Style Modal */
+.teams-modal {
+  max-width: 1000px !important;
+  width: 90% !important;
+  height: 85vh !important;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.teams-modal-header {
+  padding: 20px 30px;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-icon-main { font-size: 24px; color: var(--color-primary); }
+.modal-subtitle { font-size: 13px; opacity: 0.7; }
+
+.teams-modal-body {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.teams-main-column { padding: 30px; border-right: 1px solid var(--color-border); }
+.teams-sidebar { padding: 30px; background: rgba(0,0,0,0.02); }
+
+.modal-section { margin-bottom: 30px; }
+.modal-section h3 { font-size: 14px; margin-bottom: 15px; border: none; }
+
+.description-box { line-height: 1.6; font-size: 15px; }
+
+/* Grid de Anexos (Estilo Teams) */
+.attachment-grid-teams {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.download-card-teams {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--color-text-primary);
+  transition: 0.2s;
+}
+
+.download-card-teams:hover { border-color: var(--color-primary); background: rgba(16, 185, 129, 0.05); }
+
+/* Área de Upload */
+.upload-zone-teams {
+  border: 2px dashed var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.upload-zone-teams input { position: absolute; opacity: 0; width: 100%; height: 100%; top:0; left:0; cursor: pointer; }
+
+/* --- GESTOR DE EQUIPES & ABAS --- */
+.internal-tabs-nav { display: flex; gap: 25px; margin-bottom: 30px; border-bottom: 2px solid var(--color-border); }
+.tab-btn { background: none; border: none; padding: 12px 5px; font-weight: 600; color: var(--color-text-secondary); cursor: pointer; position: relative; }
+.tab-btn.active { color: var(--color-info); }
+.tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; background: var(--color-info); }
+.delegar-section { display: none; }
+.delegar-section.active { display: block; animation: fadeIn 0.3s ease; }
+
+/* --- SELEÇÃO BOLINHA VERDE --- */
+.green-dot-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; background: var(--color-bg-primary); border: 1px solid var(--color-border); border-radius: 12px; cursor: pointer; margin-bottom: 8px; transition: 0.2s; }
+.dot { width: 18px; height: 18px; border: 2px solid #cbd5e1; border-radius: 50%; transition: 0.3s; }
+input[name="funcDelegado"]:checked + .green-dot-item { border-color: var(--color-primary); background: rgba(16, 185, 129, 0.05); }
+input[name="funcDelegado"]:checked + .green-dot-item .dot { background: var(--color-primary); border-color: var(--color-primary); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+
+/* --- MODAL ESTILO TEAMS --- */
+.teams-modal { max-width: 900px !important; width: 95% !important; height: 80vh !important; padding: 0 !important; overflow: hidden !important; display: flex; flex-direction: column; }
+.teams-header { padding: 20px 30px; background: var(--color-bg-primary); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; }
+.teams-body { display: grid; grid-template-columns: 1fr 280px; height: 100%; overflow-y: auto; }
+.teams-main { padding: 30px; border-right: 1px solid var(--color-border); }
+.teams-side { padding: 30px; background: rgba(0,0,0,0.02); }
+
+/* ======================================================= */
+/* MODAL TEAMS STYLE (TAREFAS RECEBIDAS)                   */
+/* ======================================================= */
+
+/* 1. Anula as margens padrão do modal antigo */
+.modal-content.teams-modal {
+  max-width: 900px !important;
+  width: 95% !important;
+  height: 85vh !important;
+  padding: 0 !important; /* 🚀 REMOVE A BORDA BRANCA GIGANTE */
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
+}
+
+/* 2. Cabeçalho */
+.teams-modal-header {
+  padding: 20px 30px;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.teams-header-info { display: flex; align-items: center; gap: 15px; }
+
+.teams-header-info .icon-circle {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(16, 185, 129, 0.1); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+}
+
+.teams-header-info h2 { margin: 0 0 4px 0 !important; font-size: 20px !important; border: none !important; padding: 0 !important; }
+.teams-header-info .subtitle { margin: 0; font-size: 13px; color: var(--color-text-secondary); }
+
+.teams-modal-header .close-modal { align-self: center; margin: 0; padding: 0; display: block; }
+
+/* 3. Corpo (Sistema de Grid 2 Colunas) */
+.teams-modal-body {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--color-bg-secondary);
+}
+
+.teams-main-column { padding: 30px; }
+.teams-sidebar { padding: 30px; background: var(--color-bg-primary); border-left: 1px solid var(--color-border); }
+
+/* 4. Secções e Instruções */
+.teams-section { margin-bottom: 35px; }
+.teams-section h3 {
+  font-size: 15px; margin-bottom: 15px; border-bottom: 1px solid var(--color-border);
+  padding-bottom: 10px; color: var(--color-text-primary); display: flex; align-items: center; gap: 8px;
+}
+
+.instruction-box { background: var(--color-bg-primary); padding: 20px; border-radius: 8px; border: 1px solid var(--color-border); }
+.instruction-box p { margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: var(--color-text-primary); }
+
+/* 5. Downloads */
+.teams-attachment-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.download-card-teams { background: var(--color-bg-secondary); border: 1px solid var(--color-border); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--color-text-primary); transition: 0.2s; }
+.download-card-teams:hover { border-color: var(--color-info); background: rgba(59, 130, 246, 0.05); }
+
+/* 6. Sidebar (Direita) */
+.sidebar-block { margin-bottom: 25px; }
+.sidebar-block label { font-size: 12px; color: var(--color-text-secondary); display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; }
+.sidebar-block p { font-weight: 600; font-size: 14px; margin: 0; color: var(--color-text-primary); }
+
+/* 7. Responsivo Mobile */
+@media (max-width: 768px) {
+  .teams-modal-body { grid-template-columns: 1fr; }
+  .teams-sidebar { border-left: none; border-top: 1px solid var(--color-border); }
+}
+
+/* ======================================================= */
+/* CORREÇÃO DE ESCALA E LAYOUT (MODAL TEAMS)               */
+/* ======================================================= */
+
+#modalResponderTarefa.modal-overlay {
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+/* 🚀 TRAVA A JANELA NO CENTRO E IMPEDE DE VAZAR A TELA */
+.modal-content.teams-modal {
+  padding: 0 !important; /* Anula o branco extra */
+  max-width: 950px !important;
+  width: 95% !important;
+  height: 85vh !important; /* Fixa a altura máxima */
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: 16px !important;
+  overflow: hidden !important; /* Corta qualquer coisa que tente sair da caixa */
+  background: var(--color-bg-secondary) !important;
+}
+
+.teams-modal-header {
+  padding: 20px 30px;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0; /* Impede o cabeçalho de encolher */
+}
+
+.teams-header-info { display: flex; align-items: center; gap: 15px; }
+.teams-header-info .icon-circle {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(16, 185, 129, 0.1); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+}
+.teams-header-info h2 { margin: 0 0 4px 0 !important; font-size: 20px !important; border: none !important; padding: 0 !important; }
+
+/* 🚀 O SEGREDO DO SCROLL: Só o corpo da janela rola */
+.teams-modal-body {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  overflow-y: auto; /* Scroll apenas interno */
+  flex-grow: 1; /* Ocupa o resto do espaço */
+  height: 100%;
+}
+
+.teams-main-column {
+  padding: 30px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 25px; /* Espaço igual entre as caixas */
+}
+
+.teams-sidebar { 
+  padding: 30px; 
+  background: var(--color-bg-primary); 
+  border-left: 1px solid var(--color-border); 
+}
+
+.teams-section {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 0 !important;
+}
+body.dark-mode .teams-section { background: rgba(0, 0, 0, 0.15); }
+
+.teams-section h3 {
+  font-size: 15px !important; margin: 0 0 15px 0 !important;
+  border-bottom: 1px dashed var(--color-border) !important;
+  padding-bottom: 12px !important; color: var(--color-text-primary) !important;
+}
+
+.instruction-box {
+  background: var(--color-bg-secondary); border: 1px solid var(--color-border);
+  padding: 16px; border-radius: 8px;
+}
+.instruction-box p { margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: var(--color-text-primary); }
+
+@media (max-width: 768px) {
+  .teams-modal-body { grid-template-columns: 1fr; }
+  .teams-sidebar { border-left: none; border-top: 1px solid var(--color-border); }
+}
+
+/* FORÇA A ATUALIZAÇÃO DAS CORES NO MODO ESCURO */
+body.dark-mode {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-border: #334155;
 }
