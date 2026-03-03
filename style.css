@@ -2141,3 +2141,49 @@ button, a, input, select, textarea, .nav-item, .btn-icon-only, .file-drop-area, 
   pointer-events: none !important;
   display: none !important;
 }
+
+/* ======================================================= */
+/* 🚀 BLINDAGEM DE TOQUE E SCROLL (CORREÇÃO MOBILE FINAL)  */
+/* ======================================================= */
+
+/* 1. Liberta o ecrã tátil do bloqueio do iOS */
+html, body {
+  overflow-x: visible !important; /* Remove o bloqueio maldito do iPhone */
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: auto !important; 
+}
+
+/* Movemos o corte da tela para o container interno, salvando os toques */
+.app-container {
+  overflow-x: hidden !important;
+  width: 100vw;
+  max-width: 100%;
+}
+
+/* 2. Anula a obrigatoriedade de "Duplo Clique" no telemóvel (Bug do Hover) */
+@media (hover: none) {
+  .btn:hover, .nav-item:hover, .btn-icon-only:hover, .download-card-teams:hover, .green-dot-item:hover, .file-drop-area:hover {
+      transform: none !important;
+      box-shadow: none !important;
+      background-color: inherit; /* Ignora a mudança de cor no 1º toque */
+  }
+}
+
+/* 3. Resposta Imediata aos cliques e prevenção de seleção de texto acidental */
+button, a, input[type="button"], select, .nav-item, .btn-icon-only, .file-drop-area, .green-dot-item, .tab-btn, .close-modal {
+  touch-action: manipulation !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important; /* Remove o piscar cinzento no Android */
+  user-select: none !important; /* Evita a lupa de texto ao tocar rápido */
+}
+
+/* Permite selecionar texto apenas onde deve ser permitido */
+input[type="text"], input[type="email"], input[type="password"], textarea, p, h1, h2, h3, span {
+  user-select: auto;
+}
+
+/* 4. Corrige o espaço gigante duplo nas Configurações do telemóvel */
+.main-content .app-container {
+  padding-top: 0 !important;
+  min-height: auto !important;
+}

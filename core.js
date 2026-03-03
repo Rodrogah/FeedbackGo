@@ -721,11 +721,17 @@ window.toggleMobileMenu = function() {
   });
 };
 
-// Fechar o menu automaticamente ao clicar numa opção
 document.addEventListener('click', function(e) {
+  // 1. Se clicou num link/botão do menu
   if (e.target.closest('.nav-item')) {
+      document.querySelectorAll('.sidebar-nav, .sidebar-footer').forEach(el => el.classList.remove('open'));
+  }
+  // 2. Se o menu estiver aberto e clicou FORA do menu (na área vazia)
+  else if (!e.target.closest('.sidebar-nav') && !e.target.closest('.sidebar-footer') && !e.target.closest('.mobile-menu-toggle')) {
       document.querySelectorAll('.sidebar-nav, .sidebar-footer').forEach(el => {
-          el.classList.remove('open');
+          if (el.classList.contains('open')) {
+              el.classList.remove('open');
+          }
       });
   }
 });
