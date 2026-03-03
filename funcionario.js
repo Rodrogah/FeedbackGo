@@ -68,10 +68,10 @@ async function showEmployeeSection(sec) {
       if (typeof setTodayDate === 'function') setTodayDate('taskDate');
       const c = companies.find((x) => x.id === currentUser.companyId);
       const catEl = document.getElementById('taskCategory');
-      if (catEl && c)
-        catEl.innerHTML = (c.categories || defaultCategories)
-          .map((cat) => `<option value="${cat}">${cat}</option>`)
-          .join('');
+      if (catEl && c) {
+          // Chama a função global que cria os grupos no Select!
+          catEl.innerHTML = typeof buildCategorySelectOptions === 'function' ? buildCategorySelectOptions(c.categories || defaultCategories) : '';
+      }
       setupNewTaskForm();
     } else if (sec === 'history') {
       loadEmployeeHistory();

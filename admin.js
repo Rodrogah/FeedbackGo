@@ -17,21 +17,16 @@ function initAdminPanel() {
 
 async function showAdminSection(sec) {
   const palco = document.getElementById('adminConteudoDinamico');
-  if (!palco) return console.error('Erro fatal: adminConteudoDinamico não existe!');
+  if (!palco) return;
 
-  // Atualiza o menu ativo (deixa o botão azul)
   document.querySelectorAll('#adminPanel .nav-item').forEach((i) => i.classList.remove('active'));
   const activeNav = document.querySelector(`#adminPanel .nav-item[onclick*="${sec}"]`);
   if (activeNav) activeNav.classList.add('active');
 
-  // 🚀 1. ANIMAÇÃO DE SAÍDA: Apaga o ecrã atual suavemente
   palco.style.transition = 'opacity 0.2s ease';
   palco.style.opacity = '0';
-  
-  // Espera a tela ficar totalmente invisível (200ms) antes de trocar o HTML
   await new Promise(resolve => setTimeout(resolve, 200));
 
-  // Mostra um spinner super discreto durante o carregamento
   palco.innerHTML = '<div style="text-align:center; padding:50px; opacity: 0.4;"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i></div>';
   palco.style.opacity = '1';
 
@@ -48,50 +43,30 @@ async function showAdminSection(sec) {
     };
     
     const resposta = await fetch(`./telas/${rotas[sec]}`);
-    if (!resposta.ok) throw new Error('Erro de fetch: Ficheiro não encontrado.');
-    
-    // ANIMAÇÃO DE ENTRADA: Envolve o novo HTML na div animada que criamos no CSS
-    const htmlNovo = await resposta.text();
-
-    // Devolvemos o HTML original sem NENHUMA div extra para não quebrar o CSS
-    palco.innerHTML = htmlNovo;
-
-    // Aplicamos a animação DIRETAMENTE no palco principal
+    if (!resposta.ok) throw new Error('Ficheiro não encontrado.');
+    palco.innerHTML = await resposta.text();
     palco.classList.remove('fade-entrar');
-    void palco.offsetWidth; // Truque do JS para forçar a animação a reiniciar
+    void palco.offsetWidth;
     palco.classList.add('fade-entrar');
-
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Força o topo ao trocar de ecrã
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const c = companies.find((x) => x.id === currentUser.companyId);
 
     if (sec === 'dashboard') {
       const dashTeam = document.getElementById('dashFilterTeam');
-      if (dashTeam)
-        dashTeam.innerHTML =
-          '<option value="">Todas as Equipes</option>' +
-          (c.teams || [])
-            .map((t) => `<option value="${t}">${t}</option>`)
-            .join('');
+      if (dashTeam) dashTeam.innerHTML = '<option value="">Todas as Equipes</option>' + (c.teams || []).map((t) => `<option value="${t}">${t}</option>`).join('');
       refreshAdminDashboard();
-      updateCurrentDate('adminCurrentDate');
     } else if (sec === 'new-task') {
       if (typeof setTodayDate === 'function') setTodayDate('adminTaskDate');
       const catEl = document.getElementById('adminTaskCategory');
-      if (catEl)
-        catEl.innerHTML = (c.categories || defaultCategories)
-          .map((cat) => `<option value="${cat}">${cat}</option>`)
-          .join('');
+      if (catEl) catEl.innerHTML = buildCategorySelectOptions(c.categories || defaultCategories); // <--- AQUI CHAMA O AGRUPAMENTO
       setupAdminNewTaskForm();
     } else if (sec === 'all-activities') {
       populateAdminFilters(c);
       loadAllActivities();
     } else if (sec === 'users') {
       const teamEl = document.getElementById('newUserTeam');
-      if (teamEl)
-        teamEl.innerHTML = (c.teams || [])
-          .map((t) => `<option value="${t}">${t}</option>`)
-          .join('');
+      if (teamEl) teamEl.innerHTML = (c.teams || []).map((t) => `<option value="${t}">${t}</option>`).join('');
       loadUsersTable();
       setupNewUserForm();
     } else if (sec === 'teams') {
@@ -99,20 +74,9 @@ async function showAdminSection(sec) {
       setupNewTeamForm();
     } else if (sec === 'reports') {
       const teamFilter = document.getElementById('reportFilterTeam');
-      if (teamFilter)
-        teamFilter.innerHTML =
-          '<option value="">Todas as Equipes</option>' +
-          (c.teams || [])
-            .map((t) => `<option value="${t}">${t}</option>`)
-            .join('');
+      if (teamFilter) teamFilter.innerHTML = '<option value="">Todas as Equipes</option>' + (c.teams || []).map((t) => `<option value="${t}">${t}</option>`).join('');
       const userFilter = document.getElementById('reportFilterUser');
-      if (userFilter)
-        userFilter.innerHTML =
-          '<option value="">Todos os Colaboradores</option>' +
-          users
-            .filter((u) => u.companyId === c.id)
-            .map((u) => `<option value="${u.id}">${u.name}</option>`)
-            .join('');
+      if (userFilter) userFilter.innerHTML = '<option value="">Todos os Colaboradores</option>' + users.filter((u) => u.companyId === c.id).map((u) => `<option value="${u.id}">${u.name}</option>`).join('');
     } else if (sec === 'settings') {
       const compInput = document.getElementById('settingsCompanyName');
       if (compInput) compInput.value = c.name;
@@ -120,16 +84,9 @@ async function showAdminSection(sec) {
       if (profileInput) profileInput.value = currentUser.name;
       loadCategories(c);
       setupAdminSettingsForms();
-
     } else if (sec === 'delegar') {
-      // Carrega as categorias no select
-      const c = companies.find((x) => x.id === currentUser.companyId);
       const catEl = document.getElementById('delegarCategoria');
-      if (catEl) {
-          catEl.innerHTML = (c.categories || defaultCategories)
-              .map((cat) => `<option value="${cat}">${cat}</option>`)
-              .join('');
-      }
+      if (catEl) catEl.innerHTML = buildCategorySelectOptions(c.categories || defaultCategories); // <--- AQUI TAMBÉM
       setupAdminDelegarForm();
       loadTarefasEnviadas();
     }
@@ -541,14 +498,45 @@ window.deleteTeam = function (i) {
 function loadCategories(c) {
   const el = document.getElementById('categoriesList');
   if (!el) return;
-  el.innerHTML = (c.categories || defaultCategories)
-    .map(
-      (cat, i) =>
-        `<span class="badge cat-badge-dynamic" style="${getCategoryStyleString(
-          cat
-        )} display:inline-flex; align-items:center; gap:6px; padding: 6px 14px;">${cat} <i class="fa-solid fa-circle-xmark" style="cursor:pointer; opacity: 0.8;" onclick="deleteCategory(${i})"></i></span>`
-    )
-    .join('');
+
+  let groups = {};
+  let ungrouped = [];
+  
+  (c.categories || defaultCategories).forEach((cat, i) => {
+      if(cat.includes('::')) {
+          let parts = cat.split('::');
+          let g = parts[0].trim();
+          let sub = parts[1].trim();
+          if(!groups[g]) groups[g] = [];
+          groups[g].push({ id: i, name: sub, full: cat });
+      } else {
+          ungrouped.push({ id: i, name: cat, full: cat });
+      }
+  });
+
+  let html = '';
+  
+  for(let g in groups) {
+      html += `<div style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: 8px; padding: 15px;">`;
+      html += `<strong style="display:flex; align-items:center; gap: 8px; margin-bottom: 12px; color: var(--color-primary); border-bottom: 1px solid var(--color-border); padding-bottom: 8px;"><i class="fa-solid fa-layer-group"></i> ${g}</strong>`;
+      html += `<div style="display: flex; gap: 8px; flex-wrap: wrap;">`;
+      groups[g].forEach(item => {
+          html += `<span class="badge cat-badge-dynamic" style="${getCategoryStyleString(item.full)} display:inline-flex; align-items:center; gap:6px; padding: 6px 14px; font-size:12px;">${item.name} <i class="fa-solid fa-circle-xmark" style="cursor:pointer; opacity: 0.8;" onclick="deleteCategory(${item.id})"></i></span>`;
+      });
+      html += `</div></div>`;
+  }
+
+  if(ungrouped.length > 0) {
+      html += `<div style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: 8px; padding: 15px;">`;
+      html += `<strong style="display:flex; align-items:center; gap: 8px; margin-bottom: 12px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); padding-bottom: 8px;"><i class="fa-solid fa-tag"></i> Gerais / Legado</strong>`;
+      html += `<div style="display: flex; gap: 8px; flex-wrap: wrap;">`;
+      ungrouped.forEach(item => {
+          html += `<span class="badge cat-badge-dynamic" style="${getCategoryStyleString(item.full)} display:inline-flex; align-items:center; gap:6px; padding: 6px 14px; font-size:12px;">${item.name} <i class="fa-solid fa-circle-xmark" style="cursor:pointer; opacity: 0.8;" onclick="deleteCategory(${item.id})"></i></span>`;
+      });
+      html += `</div></div>`;
+  }
+
+  el.innerHTML = html;
 }
 
 window.deleteCategory = function (i) {
@@ -741,9 +729,15 @@ function setupAdminSettingsForms() {
   if (catForm) {
     catForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      const n = document.getElementById('newCategoryName').value.trim();
+      const grupo = document.getElementById('newCategoryGroup').value.trim();
+      const sub = document.getElementById('newCategoryName').value.trim();
+      
+      // Cria o texto agrupado "Grupo :: Sub"
+      const n = grupo + " :: " + sub;
+
       let c = companies.find((x) => x.id === currentUser.companyId);
       if (!c.categories) c.categories = [...defaultCategories];
+      
       if (!c.categories.includes(n)) {
         c.categories.push(n);
         db.collection('empresas')
@@ -751,8 +745,12 @@ function setupAdminSettingsForms() {
           .update({ categories: c.categories })
           .then(() => {
             document.getElementById('newCategoryName').value = '';
+            // Não apaga o grupo para facilitar o cadastro em lote
             loadCategories(c);
+            showToast('Subcategoria adicionada!');
           });
+      } else {
+          showToast('Esta subcategoria já existe neste grupo!', 'error');
       }
     });
   }
@@ -776,15 +774,12 @@ function setupAdminSettingsForms() {
         .then(() => {
           if (newName) {
             currentUser.name = newName;
-            document.getElementById('sidebarAdminName').textContent =
-              currentUser.name.split(' ')[0];
-            document.getElementById('adminAvatar').textContent =
-              currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('sidebarAdminName').textContent = currentUser.name.split(' ')[0];
+            document.getElementById('adminAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
           }
           document.getElementById('admProfilePassword').value = '';
           showNotice('admProfileAlert', 'Perfil atualizado!', 'success');
-          if (btn)
-            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Atualizar';
+          if (btn) btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Atualizar';
         });
     });
   }

@@ -244,7 +244,7 @@ function generateActivityTableHTML(acts, isAdmin = false) {
               <td class="td-data">${formatDate(a.date)}</td>
               <td class="td-categoria"><span class="badge cat-badge-dynamic" style="${getCategoryStyleString(
                 a.category || 'Geral'
-              )}">${a.category || 'Geral'}</span></td>
+              )}">${typeof formatCategoryName === 'function' ? formatCategoryName(a.category) : (a.category || 'Geral')}</span></td>
               <td class="td-titulo"><strong>${
                 a.title
               }</strong></td><td class="td-detalhes">${
@@ -436,11 +436,10 @@ function openEditModal(id) {
     return;
   }
   const c = companies.find((x) => x.id === currentUser.companyId);
-  document.getElementById('editTaskCategory').innerHTML = (
-    c.categories || defaultCategories
-  )
-    .map((cat) => `<option value="${cat}">${cat}</option>`)
-    .join('');
+  document.getElementById('editTaskCategory').innerHTML = typeof buildCategorySelectOptions === 'function' 
+      ? buildCategorySelectOptions(c.categories || defaultCategories) 
+      : (c.categories || defaultCategories).map((cat) => `<option value="${cat}">${cat}</option>`).join('');
+      
   document.getElementById('editTaskId').value = a.id;
   document.getElementById('editTaskDate').value = a.date;
   document.getElementById('editTaskCategory').value = a.category || 'Geral';
@@ -939,3 +938,40 @@ themeObserver.observe(document.body, { childList: true, subtree: true });
     }
 });
 })();
+
+// ============ SISTEMA DE SUB-CATEGORIAS ============
+window.buildCategorySelectOptions = function(categoriesArray) {
+  let groups = {};
+  let ungrouped = [];
+  
+  categoriesArray.forEach(cat => {
+      if(cat.includes('::')) {
+          let parts = cat.split('::');
+          let g = parts[0].trim();
+          let sub = parts[1].trim();
+          if(!groups[g]) groups[g] = [];
+          groups[g].push({ full: cat, sub: sub });
+      } else {
+          ungrouped.push(cat);
+      }
+  });
+
+  let html = '';
+  if (ungrouped.length > 0) {
+      html += `<optgroup label="Gerais / Legado">`;
+      ungrouped.forEach(cat => html += `<option value="${cat}">${cat}</option>`);
+      html += `</optgroup>`;
+  }
+  for (let g in groups) {
+      html += `<optgroup label="${g}">`;
+      groups[g].forEach(item => html += `<option value="${item.full}">${item.sub}</option>`);
+      html += `</optgroup>`;
+  }
+  return html;
+};
+
+window.formatCategoryName = function(catString) {
+  if (!catString) return 'Geral';
+  // Troca o "::" por uma setinha visual bonita nas tabelas
+  return catString.replace('::', ' <i class="fa-solid fa-chevron-right" style="font-size:9px; opacity:0.6; margin: 0 4px;"></i> ');
+};
