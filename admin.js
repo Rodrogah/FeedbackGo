@@ -339,17 +339,13 @@ function loadAllActivities() {
 function populateAdminFilters(c) {
   const tEl = document.getElementById('admFilterTeam');
   const uEl = document.getElementById('adminFilterUser');
+  const cEl = document.getElementById('admFilterCategory'); // NOVO
   if (tEl)
-    tEl.innerHTML =
-      '<option value="">Todas</option>' +
-      (c.teams || []).map((t) => `<option value="${t}">${t}</option>`).join('');
+    tEl.innerHTML = '<option value="">Todas as Equipes</option>' + (c.teams || []).map((t) => `<option value="${t}">${t}</option>`).join('');
   if (uEl)
-    uEl.innerHTML =
-      '<option value="">Todos</option>' +
-      users
-        .filter((u) => u.companyId === c.id && u.active)
-        .map((u) => `<option value="${u.id}">${u.name}</option>`)
-        .join('');
+    uEl.innerHTML = '<option value="">Todos os Colaboradores</option>' + users.filter((u) => u.companyId === c.id && u.active).map((u) => `<option value="${u.id}">${u.name}</option>`).join('');
+  if (cEl)
+    cEl.innerHTML = '<option value="">Todas as Categorias</option>' + (typeof buildCategorySelectOptions === 'function' ? buildCategorySelectOptions(c.categories || defaultCategories) : '');
 }
 
 window.applyAdminFilters = function (page = 1) {
@@ -358,8 +354,9 @@ window.applyAdminFilters = function (page = 1) {
   const t = document.getElementById('admFilterTeam') ? document.getElementById('admFilterTeam').value : '';
   const uId = document.getElementById('adminFilterUser') ? document.getElementById('adminFilterUser').value : '';
   const s = document.getElementById('adminFilterStartDate') ? document.getElementById('adminFilterStartDate').value : '';
+  const cat = document.getElementById('admFilterCategory') ? document.getElementById('admFilterCategory').value : ''; // NOVO
+  const search = document.getElementById('admFilterSearch') ? document.getElementById('admFilterSearch').value.toLowerCase().trim() : ''; // NOVO
   
-  // Pega a escolha do usuário (se não achar o filtro, usa 'desc' como padrão)
   const ordemEl = document.getElementById('ordemHistorico');
   const ordemEscolhida = ordemEl ? ordemEl.value : 'desc';
   
@@ -367,30 +364,67 @@ window.applyAdminFilters = function (page = 1) {
   
   if (uId) f = f.filter((a) => a.userId === parseInt(uId));
   if (s) f = f.filter((a) => a.date >= s);
+  if (cat) f = f.filter((a) => a.category === cat);
+  if (search) {
+      f = f.filter((a) => 
+          (a.title && a.title.toLowerCase().includes(search)) || 
+          (a.description && a.description.toLowerCase().includes(search))
+      );
+  }
   if (t) {
     const tUs = users.filter((u) => u.team === t).map((u) => u.id);
     f = f.filter((a) => tUs.includes(a.userId));
   }
   
-  // Com desempate por hora
   currentAdminFilteredActs = f.sort((a, b) => {
     const dataA = a.date || '';
     const dataB = b.date || '';
-
-    // Se a data for exatamente igual, desempata pela hora de criação (createdAt)
     if (dataA === dataB) {
         const tempoA = new Date(a.createdAt || 0).getTime();
         const tempoB = new Date(b.createdAt || 0).getTime();
         return ordemEscolhida === 'asc' ? tempoA - tempoB : tempoB - tempoA;
     }
-    
-    // Se as datas forem diferentes, usa a ordem escolhida
-    return ordemEscolhida === 'asc' 
-        ? dataA.localeCompare(dataB) 
-        : dataB.localeCompare(dataA);
+    return ordemEscolhida === 'asc' ? dataA.localeCompare(dataB) : dataB.localeCompare(dataA);
   });
 
   if (typeof renderAdminHistoryPage === 'function') renderAdminHistoryPage();
+};
+
+window.getFilteredReportData = function () {
+  const t = document.getElementById('reportFilterTeam') ? document.getElementById('reportFilterTeam').value : '';
+  const uId = document.getElementById('reportFilterUser') ? document.getElementById('reportFilterUser').value : '';
+  const s = document.getElementById('reportStartDate') ? document.getElementById('reportStartDate').value : '';
+  const e = document.getElementById('reportEndDate') ? document.getElementById('reportEndDate').value : '';
+  const cat = document.getElementById('reportFilterCategory') ? document.getElementById('reportFilterCategory').value : ''; // NOVO
+  const search = document.getElementById('reportFilterSearch') ? document.getElementById('reportFilterSearch').value.toLowerCase().trim() : ''; // NOVO
+  
+  let f = activities.filter((a) => a.companyId === currentUser.companyId);
+  
+  if (s) f = f.filter((a) => a.date >= s);
+  if (e) f = f.filter((a) => a.date <= e);
+  if (cat) f = f.filter((a) => a.category === cat);
+  if (search) {
+      f = f.filter((a) => 
+          (a.title && a.title.toLowerCase().includes(search)) || 
+          (a.description && a.description.toLowerCase().includes(search))
+      );
+  }
+  if (t) {
+    const tUs = users.filter((u) => u.team === t).map((u) => u.id);
+    f = f.filter((a) => tUs.includes(a.userId));
+  }
+  if (uId) f = f.filter((a) => a.userId === parseInt(uId));
+  
+  return f.sort((a, b) => {
+    const dataA = a.date || '';
+    const dataB = b.date || '';
+    if (dataA === dataB) {
+        const tempoA = new Date(a.createdAt || 0).getTime();
+        const tempoB = new Date(b.createdAt || 0).getTime();
+        return tempoB - tempoA; 
+    }
+    return dataB.localeCompare(dataA);
+  });
 };
 
 window.renderAdminHistoryPage = function() {
@@ -495,23 +529,24 @@ window.deleteTeam = function (i) {
     });
 };
 
-function loadCategories(c) {
+window.loadCategories = function(c) {
   const el = document.getElementById('categoriesList');
   if (!el) return;
 
   let groups = {};
-  let ungrouped = [];
   
-  (c.categories || defaultCategories).forEach((cat, i) => {
+  (c.categories || []).forEach((cat, i) => {
+      let g = "Outros"; // Rede de segurança para categorias sem grupo
+      let sub = cat;
+      
       if(cat.includes('::')) {
           let parts = cat.split('::');
-          let g = parts[0].trim();
-          let sub = parts[1].trim();
-          if(!groups[g]) groups[g] = [];
-          groups[g].push({ id: i, name: sub, full: cat });
-      } else {
-          ungrouped.push({ id: i, name: cat, full: cat });
+          g = parts[0].trim();
+          sub = parts[1].trim();
       }
+      
+      if(!groups[g]) groups[g] = [];
+      groups[g].push({ id: i, name: sub, full: cat });
   });
 
   let html = '';
@@ -526,18 +561,8 @@ function loadCategories(c) {
       html += `</div></div>`;
   }
 
-  if(ungrouped.length > 0) {
-      html += `<div style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: 8px; padding: 15px;">`;
-      html += `<strong style="display:flex; align-items:center; gap: 8px; margin-bottom: 12px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); padding-bottom: 8px;"><i class="fa-solid fa-tag"></i> Gerais / Legado</strong>`;
-      html += `<div style="display: flex; gap: 8px; flex-wrap: wrap;">`;
-      ungrouped.forEach(item => {
-          html += `<span class="badge cat-badge-dynamic" style="${getCategoryStyleString(item.full)} display:inline-flex; align-items:center; gap:6px; padding: 6px 14px; font-size:12px;">${item.name} <i class="fa-solid fa-circle-xmark" style="cursor:pointer; opacity: 0.8;" onclick="deleteCategory(${item.id})"></i></span>`;
-      });
-      html += `</div></div>`;
-  }
-
   el.innerHTML = html;
-}
+};
 
 window.deleteCategory = function (i) {
   let c = companies.find((x) => x.id === currentUser.companyId);
@@ -725,7 +750,8 @@ function setupNewTeamForm() {
 }
 
 function setupAdminSettingsForms() {
-  const catForm = document.getElementById('addCategoryForm');
+  // 1. Aponta para o NOVO ID do formulário de categorias
+  const catForm = document.getElementById('formNovaCategoria'); 
   if (catForm) {
     catForm.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -755,6 +781,7 @@ function setupAdminSettingsForms() {
     });
   }
 
+  // 2. Formulário de Perfil do Administrador (Mantido igual)
   const profForm = document.getElementById('admProfileForm');
   if (profForm) {
     profForm.addEventListener('submit', function (e) {
@@ -762,7 +789,7 @@ function setupAdminSettingsForms() {
       const newName = document.getElementById('admProfileName').value.trim();
       const newPass = document.getElementById('admProfilePassword').value;
       const btn = profForm.querySelector('button');
-      if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Atualizando...';
 
       let updates = {};
       if (newName) updates.name = newName;
@@ -825,38 +852,6 @@ window.openSettingsTab = function (tabId, btnElement) {
           activeTab.insertBefore(backBtn, activeTab.firstChild);
       }
   }
-};
-
-window.getFilteredReportData = function () {
-  const t = document.getElementById('reportFilterTeam') ? document.getElementById('reportFilterTeam').value : '';
-  const uId = document.getElementById('reportFilterUser') ? document.getElementById('reportFilterUser').value : '';
-  const s = document.getElementById('reportStartDate') ? document.getElementById('reportStartDate').value : '';
-  const e = document.getElementById('reportEndDate') ? document.getElementById('reportEndDate').value : '';
-  
-  let f = activities.filter((a) => a.companyId === currentUser.companyId);
-  
-  if (s) f = f.filter((a) => a.date >= s);
-  if (e) f = f.filter((a) => a.date <= e);
-  if (t) {
-    const tUs = users.filter((u) => u.team === t).map((u) => u.id);
-    f = f.filter((a) => tUs.includes(a.userId));
-  }
-  if (uId) f = f.filter((a) => a.userId === parseInt(uId));
-  
-  // Sempre Mais Novo -> Mais Antigo na Tela
-  return f.sort((a, b) => {
-    const dataA = a.date || '';
-    const dataB = b.date || '';
-
-    // Desempate por hora se forem do mesmo dia
-    if (dataA === dataB) {
-        const tempoA = new Date(a.createdAt || 0).getTime();
-        const tempoB = new Date(b.createdAt || 0).getTime();
-        return tempoB - tempoA; 
-    }
-    
-    return dataB.localeCompare(dataA);
-  });
 };
 
 window.generateReport = function () {

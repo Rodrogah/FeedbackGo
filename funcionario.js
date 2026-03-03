@@ -1,27 +1,20 @@
 // ============ MOTOR DE NAVEGAÇÃO DO FUNCIONÁRIO ============
 async function showEmployeeSection(sec) {
-  // ATENÇÃO: Verifique se o ID do palco do funcionário é este mesmo no seu HTML
   const palco = document.getElementById('funcConteudoDinamico'); 
   if (!palco) return console.error('Erro fatal: funcConteudoDinamico não existe!');
 
-  // Atualiza o menu ativo (deixa o botão com a cor de destaque)
   document.querySelectorAll('#employeePanel .nav-item').forEach((i) => i.classList.remove('active'));
   const activeNav = document.querySelector(`#employeePanel .nav-item[onclick*="${sec}"]`);
   if (activeNav) activeNav.classList.add('active');
 
-  // 🚀 1. ANIMAÇÃO DE SAÍDA: Apaga o ecrã atual suavemente
   palco.style.transition = 'opacity 0.2s ease';
   palco.style.opacity = '0';
-  
-  // Espera a tela ficar totalmente invisível (200ms) antes de trocar o HTML
   await new Promise(resolve => setTimeout(resolve, 200));
 
-  // Mostra um spinner super discreto durante o carregamento
   palco.innerHTML = '<div style="text-align:center; padding:50px; opacity: 0.4;"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i></div>';
   palco.style.opacity = '1';
 
   try {
-    // Verifique se as rotas do funcionário têm nomes diferentes
     const rotas = {
       dashboard: 'func-dashboard.html',
       'new-task': 'func-nova-atividade.html',
@@ -33,17 +26,13 @@ async function showEmployeeSection(sec) {
     const resposta = await fetch(`./telas/${rotas[sec]}`);
     if (!resposta.ok) throw new Error('Erro de fetch: Ficheiro não encontrado.');
     
-    const htmlNovo = await resposta.text();
-    
-    // 🚀 2. Devolvemos o HTML original sem NENHUMA div extra (para não quebrar o layout)
-    palco.innerHTML = htmlNovo;
-
-    // 🚀 3. Aplicamos a animação DIRETAMENTE no palco principal
+    palco.innerHTML = await resposta.text();
     palco.classList.remove('fade-entrar');
-    void palco.offsetWidth; // Truque do JS para forçar a animação a reiniciar
+    void palco.offsetWidth; 
     palco.classList.add('fade-entrar');
+    window.scrollTo({ top: 0, behavior: 'smooth' }); 
 
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Força o topo ao trocar de ecrã
+    const c = companies.find((x) => x.id === currentUser.companyId);
 
     if (sec === 'dashboard') {
       const greet = document.getElementById('employeeGreeting');
@@ -52,7 +41,6 @@ async function showEmployeeSection(sec) {
       loadEmployeeRecentTasks();
       updateCurrentDate('currentDate');
 
-      const c = companies.find((x) => x.id === currentUser.companyId);
       const avisoCard = document.getElementById('employeeAnnouncementCard');
       const avisoTexto = document.getElementById('employeeAnnouncementText');
       if (avisoCard && avisoTexto && c) {
@@ -66,24 +54,27 @@ async function showEmployeeSection(sec) {
       renderFuncCharts();
     } else if (sec === 'new-task') {
       if (typeof setTodayDate === 'function') setTodayDate('taskDate');
-      const c = companies.find((x) => x.id === currentUser.companyId);
       const catEl = document.getElementById('taskCategory');
       if (catEl && c) {
-          // Chama a função global que cria os grupos no Select!
           catEl.innerHTML = typeof buildCategorySelectOptions === 'function' ? buildCategorySelectOptions(c.categories || defaultCategories) : '';
       }
       setupNewTaskForm();
     } else if (sec === 'history') {
+      // 🚀 AQUI: Carrega as categorias (agrupadas) no filtro do Histórico!
+      const catEl = document.getElementById('empFilterCategory');
+      if (catEl && c) {
+          catEl.innerHTML = '<option value="">Todas as Categorias</option>' + 
+              (typeof buildCategorySelectOptions === 'function' ? buildCategorySelectOptions(c.categories || defaultCategories) : '');
+      }
       loadEmployeeHistory();
     } else if (sec === 'settings') {
-      const profileInput = document.getElementById('empProfileName'); // Ajustado para o ID correto do HTML
+      const profileInput = document.getElementById('empProfileName');
       if (profileInput) profileInput.value = currentUser.name;
       setupFuncSettingsForms();
-      
-  } else if (sec === 'tarefas-recebidas') {
+    } else if (sec === 'tarefas-recebidas') {
       setupFuncionarioTarefas();
-  }
-} catch (err) {
+    }
+  } catch (err) {
     palco.innerHTML = `<div class="alert alert-error">Erro: ${err.message}</div>`;
   }
 }
@@ -150,25 +141,35 @@ function loadEmployeeHistory() {
 window.applyEmployeeFilters = function(page = 1) {
   currentEmpPage = page;
   
+  // Captura o valor de todos os campos de pesquisa
   const s = document.getElementById('empFilterStart') ? document.getElementById('empFilterStart').value : '';
   const e = document.getElementById('empFilterEnd') ? document.getElementById('empFilterEnd').value : '';
+  const cat = document.getElementById('empFilterCategory') ? document.getElementById('empFilterCategory').value : ''; // Categoria
+  const search = document.getElementById('empFilterSearch') ? document.getElementById('empFilterSearch').value.toLowerCase().trim() : ''; // Barra de texto
   
   let f = activities.filter((a) => a.userId === currentUser.id);
 
+  // Aplica os filtros um a um
   if (s) f = f.filter((a) => a.date >= s);
   if (e) f = f.filter((a) => a.date <= e);
+  if (cat) f = f.filter((a) => a.category === cat);
+  if (search) {
+      f = f.filter((a) => 
+          (a.title && a.title.toLowerCase().includes(search)) || 
+          (a.description && a.description.toLowerCase().includes(search))
+      );
+  }
 
-  // Ordena do mais novo para o mais antigo, com desempate por hora exata
+  // Ordenação do mais novo para o mais antigo
   currentEmpFilteredActs = f.sort((a, b) => {
     const diffData = new Date(b.date) - new Date(a.date);
-    // Se a data for exatamente igual, desempata pelo relógio interno (createdAt)
     if (diffData === 0 && a.createdAt && b.createdAt) {
         return new Date(b.createdAt) - new Date(a.createdAt);
     }
     return diffData;
   });
 
-  //atualiza o visual da tabela após ordenar!
+  // Desenha a tabela com os resultados
   renderEmployeeHistoryPage();
 };
 

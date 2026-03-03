@@ -439,7 +439,7 @@ function openEditModal(id) {
   document.getElementById('editTaskCategory').innerHTML = typeof buildCategorySelectOptions === 'function' 
       ? buildCategorySelectOptions(c.categories || defaultCategories) 
       : (c.categories || defaultCategories).map((cat) => `<option value="${cat}">${cat}</option>`).join('');
-      
+
   document.getElementById('editTaskId').value = a.id;
   document.getElementById('editTaskDate').value = a.date;
   document.getElementById('editTaskCategory').value = a.category || 'Geral';
@@ -941,33 +941,29 @@ themeObserver.observe(document.body, { childList: true, subtree: true });
 
 // ============ SISTEMA DE SUB-CATEGORIAS ============
 window.buildCategorySelectOptions = function(categoriesArray) {
-  let groups = {};
-  let ungrouped = [];
-  
-  categoriesArray.forEach(cat => {
-      if(cat.includes('::')) {
-          let parts = cat.split('::');
-          let g = parts[0].trim();
-          let sub = parts[1].trim();
-          if(!groups[g]) groups[g] = [];
-          groups[g].push({ full: cat, sub: sub });
-      } else {
-          ungrouped.push(cat);
-      }
-  });
+    let groups = {};
+    
+    categoriesArray.forEach(cat => {
+        let g = "Outros"; // Rede de segurança para os Dropdowns
+        let sub = cat;
+        
+        if(cat.includes('::')) {
+            let parts = cat.split('::');
+            g = parts[0].trim();
+            sub = parts[1].trim();
+        }
+        
+        if(!groups[g]) groups[g] = [];
+        groups[g].push({ full: cat, sub: sub });
+    });
 
-  let html = '';
-  if (ungrouped.length > 0) {
-      html += `<optgroup label="Gerais / Legado">`;
-      ungrouped.forEach(cat => html += `<option value="${cat}">${cat}</option>`);
-      html += `</optgroup>`;
-  }
-  for (let g in groups) {
-      html += `<optgroup label="${g}">`;
-      groups[g].forEach(item => html += `<option value="${item.full}">${item.sub}</option>`);
-      html += `</optgroup>`;
-  }
-  return html;
+    let html = '';
+    for (let g in groups) {
+        html += `<optgroup label="${g}">`;
+        groups[g].forEach(item => html += `<option value="${item.full}">${item.sub}</option>`);
+        html += `</optgroup>`;
+    }
+    return html;
 };
 
 window.formatCategoryName = function(catString) {
