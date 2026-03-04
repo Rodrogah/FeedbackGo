@@ -37,3 +37,28 @@
     <div id="usersTable"></div>
 </div>
 </div>
+
+<div id="modalAcessos" class="modal-overlay hidden" style="z-index: 10000;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-list-check"></i> Histórico de Atividades</h2>
+            <button class="close-modal" onclick="fecharModalAcessos()">&times;</button>
+        </div>
+        
+        <input type="hidden" id="userIdAcessoAtual">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--color-border);">
+            <p style="font-size: 14px; color: var(--color-text-secondary); margin: 0;">
+                Ações de: <strong id="nomeUsuarioAcesso" style="color: var(--color-text-primary);"></strong>
+            </p>
+            <input type="date" id="filtroDataAcessos" class="form-control" style="width: auto; padding: 5px; cursor: pointer;" onchange="filtrarAcessosPorData()">
+        </div>
+        
+        <div id="listaAcessosUsuario" style="height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
+            </div>
+
+        <div style="text-align: right; margin-top: 20px;">
+            <button class="btn btn-secondary btn-small" onclick="fecharModalAcessos()">Fechar Janela</button>
+        </div>
+    </div>
+</div>

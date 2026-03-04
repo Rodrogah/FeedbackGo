@@ -91,12 +91,30 @@ function processAutoLogin() {
     );
     if (autoUser) {
       currentUser = autoUser;
-      // 🛡️ PROTEÇÃO: Só chama se a função showPanel existir
+
+      // Acende a bolinha verde de Online
+      db.collection('usuarios').doc(currentUser.id.toString()).update({ isOnline: true }).catch(()=>{});
+
+      // 🚀 REGISTO DIRETO: Não depende de outras funções carregarem primeiro
+      if (!sessionStorage.getItem('sessao_registrada')) {
+          const dataLocal = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString();
+          
+          db.collection('acessos').add({
+              userId: currentUser.id,
+              companyId: currentUser.companyId,
+              userName: currentUser.name,
+              acao: 'LOGIN',
+              detalhes: 'Retornou ao sistema (Acesso automático)',
+              timestamp: dataLocal
+          }).then(() => {
+              sessionStorage.setItem('sessao_registrada', 'sim');
+          }).catch(err => console.error("Erro no auto-login:", err));
+      }
+
+      // 🛡️ PROTEÇÃO: Só avança se a função visual existir
       if (typeof showPanel === 'function') {
         showPanel(autoUser.role);
       } else {
-        console.warn("Aviso: showPanel ainda não carregou.");
-        // Tenta novamente em 500ms se falhar
         setTimeout(() => { if(typeof showPanel === 'function') showPanel(autoUser.role); }, 500);
       }
       return;
@@ -105,7 +123,6 @@ function processAutoLogin() {
     }
   }
   
-  // 🛡️ PROTEÇÃO: Só chama se showLoginScreen existir
   if (typeof showLoginScreen === 'function') {
     showLoginScreen();
   }
@@ -304,54 +321,58 @@ document
       a.description = document.getElementById('editTaskDescription').value;
       a.status = newStatus;
 
-      // Atualiza a atividade de forma ultra leve!
       db.collection('atividades')
         .doc(id.toString())
         .update(a)
         .then(() => {
+          
+          // 🚀 ESPIÃO: REGISTRA A EDIÇÃO
+          if (window.registrarAcao) {
+              window.registrarAcao(currentUser.id, currentUser.companyId, currentUser.name, 'EDITAR_ATIVIDADE', `Editou a atividade: ${a.title}`);
+          }
+
           showToast('Atividade atualizada!');
           closeEditModal();
         })
         .catch(() => {
           showToast('Erro ao salvar', 'error');
           btn.disabled = false;
-          btn.innerHTML =
-            '<i class="fa-solid fa-floppy-disk"></i> Guardar Alterações';
+          btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar Alterações';
         });
     }
   });
 
-  function deleteActivity(id) {
+  window.deleteActivity = function(id) {
     showConfirm(
       'Tem certeza que deseja apagar esta atividade permanentemente? Se for uma tarefa delegada, ela também será apagada do sistema.',
       () => {
-        // 1. Primeiro lemos a atividade para ver se ela tem uma tarefa 'casada' a ela
         db.collection('atividades').doc(id.toString()).get().then(docSnap => {
           if (!docSnap.exists) return;
           const atividade = docSnap.data();
           
-          // 2. Apagamos a atividade do histórico (Firebase)
-          db.collection('atividades')
-            .doc(id.toString())
-            .delete()
-            .then(() => {
+          db.collection('atividades').doc(id.toString()).delete().then(() => {
               
-              // 3. Se a atividade veio de uma tarefa delegada, apagamos a tarefa também!
-              if (atividade.tarefaVinculadaId) {
-                db.collection('tarefas').doc(atividade.tarefaVinculadaId).delete()
-                  .catch(err => console.error("Erro ao apagar tarefa vinculada:", err));
-              }
+            // 🚀 ESPIÃO: REGISTRA A EXCLUSÃO
+            if (window.registrarAcao) {
+                window.registrarAcao(currentUser.id, currentUser.companyId, currentUser.name, 'EXCLUIR_ATIVIDADE', `Apagou o registro: ${atividade.title || 'Sem título'}`);
+            }
   
-              showToast('Atividade apagada com sucesso!');
-              
-              // 4. Atualiza a tabela na tela automaticamente
-              if (typeof refreshLiveData === 'function') refreshLiveData();
-            });
+            if (atividade.tarefaVinculadaId) {
+              db.collection('tarefas').doc(atividade.tarefaVinculadaId).delete().catch(err => console.error(err));
+            }
+  
+            showToast('Atividade apagada com sucesso!');
+            if (typeof refreshLiveData === 'function') refreshLiveData();
+            
+            // Atualiza a tela automaticamente
+            if (document.getElementById('employeeHistoryTable') && typeof loadEmployeeHistory === 'function') loadEmployeeHistory();
+            if (document.getElementById('adminActivitiesTable') && typeof loadAllActivities === 'function') loadAllActivities();
+          });
         });
       },
       'Apagar Atividade?'
     );
-  }
+  };
 
 // ============ 6. MODO ESCURO ============
 function toggleDarkMode() {
@@ -970,4 +991,23 @@ window.formatCategoryName = function(catString) {
   if (!catString) return 'Geral';
   // Troca o "::" por uma setinha visual bonita nas tabelas
   return catString.replace('::', ' <i class="fa-solid fa-chevron-right" style="font-size:9px; opacity:0.6; margin: 0 4px;"></i> ');
+};
+
+// ==========================================
+// REGISTRO DE AUDITORIA E STATUS ONLINE
+// ==========================================
+window.registrarAcao = function(userId, companyId, userName, acao, detalhes) {
+  // Pega a data e hora exata do Brasil (Fuso Local)
+  const dataLocal = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString();
+
+  db.collection('acessos').add({
+      userId: userId,
+      companyId: companyId,
+      userName: userName,
+      acao: acao,
+      detalhes: detalhes,
+      timestamp: dataLocal // Salva com o fuso corrigido!
+  }).then(() => {
+      db.collection('usuarios').doc(userId.toString()).update({ isOnline: true }).catch(()=>{});
+  }).catch(err => console.error("Erro ao registrar ação:", err));
 };

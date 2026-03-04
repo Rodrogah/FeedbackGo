@@ -490,35 +490,51 @@ window.renderAdminHistoryPage = function() {
   el.innerHTML = html;
 };
 
-function loadUsersTable() {
-  const emps = users.filter(
-    (u) => u.companyId === currentUser.companyId && u.active
-  );
+window.unsubscribeUsersTable = null; // Guarda o radar para não duplicar
+
+window.loadUsersTable = function() {
   const el = document.getElementById('usersTable');
   if (!el) return;
-  if (!emps.length) {
-    el.innerHTML = '<p>Sem usuários.</p>';
-    return;
-  }
-  el.innerHTML = `<div class="table-container"><table><thead><tr><th>Nome</th><th>Equipe</th><th>E-mail</th><th>Ações</th></tr></thead><tbody>${emps
-    .map(
-      (u) =>
-        `<tr><td><strong>${u.name}</strong> ${
-          u.role === 'admin'
-            ? '<span class="badge" style="background:#EDE9FE;color:#7C3AED;">Admin</span>'
-            : ''
-        }</td><td>${u.team || '-'}</td><td>${
-          u.email
-        }</td><td><button onclick="openEditUserModal(${
-          u.id
-        })" class="btn-icon-only edit"><i class="fa-solid fa-pen"></i></button>${
-          u.id !== currentUser.id
-            ? `<button onclick="deleteUser(${u.id})" class="btn-icon-only delete"><i class="fa-solid fa-trash"></i></button>`
-            : '-'
-        }</td></tr>`
-    )
-    .join('')}</tbody></table></div>`;
-}
+
+  // Desliga o radar anterior (se houver) para evitar lentidão
+  if (window.unsubscribeUsersTable) window.unsubscribeUsersTable();
+
+  el.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.6;"><i class="fa-solid fa-spinner fa-spin"></i> Carregando colaboradores...</div>';
+
+  // 🚀 O RADAR: Fica escutando o banco de dados AO VIVO
+  window.unsubscribeUsersTable = db.collection('usuarios')
+      .where('companyId', '==', currentUser.companyId)
+      .onSnapshot(snap => {
+          let emps = [];
+          snap.forEach(doc => emps.push(doc.data()));
+          emps = emps.filter(u => u.active);
+
+          if (!emps.length) {
+              el.innerHTML = '<p>Sem colaboradores.</p>'; return;
+          }
+
+          el.innerHTML = `<div class="table-container"><table><thead><tr>
+              <th style="text-align:center; width: 60px;">Status</th>
+              <th>Nome</th><th>Equipe</th><th>E-mail</th><th>Ações</th>
+          </tr></thead><tbody>${emps.map((u) => {
+              
+              // STATUS ONLINE EM TEMPO REAL
+              const statusDot = u.isOnline 
+                  ? `<span title="Online agora" style="display:inline-block; width:12px; height:12px; background-color:#10b981; border-radius:50%; box-shadow: 0 0 6px #10b981;"></span>` 
+                  : `<span title="Offline" style="display:inline-block; width:12px; height:12px; background-color:#64748b; border-radius:50%;"></span>`;
+
+              return `<tr>
+              <td style="text-align:center;">${statusDot}</td>
+              <td><strong>${u.name}</strong> ${u.role === 'admin' ? '<span class="badge" style="background:#EDE9FE;color:#7C3AED;">Admin</span>' : ''}</td>
+              <td>${u.team || '-'}</td><td>${u.email}</td>
+              <td style="display: flex; gap: 5px;">
+                  <button onclick="abrirModalAcessos(${u.id})" class="btn-icon-only" title="Ver Histórico Diário" style="color: var(--color-info); background: rgba(59,130,246,0.1);"><i class="fa-solid fa-list-check"></i></button>
+                  <button onclick="openEditUserModal(${u.id})" class="btn-icon-only edit" title="Editar"><i class="fa-solid fa-pen"></i></button>${
+                  u.id !== currentUser.id ? `<button onclick="deleteUser(${u.id})" class="btn-icon-only delete" title="Apagar"><i class="fa-solid fa-trash"></i></button>` : ''
+              }</td></tr>`;
+          }).join('')}</tbody></table></div>`;
+      });
+};
 
 window.deleteUser = function (id) {
   showConfirm(
@@ -625,7 +641,6 @@ function setupAdminNewTaskForm() {
   const novoForm = form.cloneNode(true);
   form.parentNode.replaceChild(novoForm, form);
 
-  // === LÓGICA DOS 3 ARQUIVOS NO ADMIN ===
   const fileInput = novoForm.querySelector('#adminTaskAttachment');
   const fileListDisplay = novoForm.querySelector('#adminFileListDisplay');
   let arquivosSelecionados = [];
@@ -633,7 +648,6 @@ function setupAdminNewTaskForm() {
   if (fileInput) {
     fileInput.addEventListener('change', function () {
       const files = Array.from(this.files);
-
       if (files.length > 3) {
         showToast('Máximo de 3 arquivos!', 'error');
         this.value = '';
@@ -641,10 +655,8 @@ function setupAdminNewTaskForm() {
         arquivosSelecionados = [];
         return;
       }
-
       arquivosSelecionados = [];
       fileListDisplay.innerHTML = '';
-
       for (let i = 0; i < files.length; i++) {
         if (files[i].size > 1 * 1024 * 1024) {
           showToast(`O arquivo ${files[i].name} é maior que 1MB!`, 'error');
@@ -663,8 +675,7 @@ function setupAdminNewTaskForm() {
     e.preventDefault();
     const btn = novoForm.querySelector('button[type="submit"]');
     const originalText = btn.innerHTML;
-    btn.innerHTML =
-      '<i class="fa-solid fa-spinner fa-spin"></i> A Processar...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A Processar...';
     btn.disabled = true;
 
     const novaAtividade = {
@@ -680,15 +691,15 @@ function setupAdminNewTaskForm() {
 
     const salvarNoBanco = (atividadeFinal) => {
       atividadeFinal.id = nextActivityId;
-      db.collection('atividades')
-        .doc(atividadeFinal.id.toString())
-        .set(atividadeFinal)
-        .then(() => {
-          showAdminSection('dashboard').then(() =>
-            showToast('Atividade registrada!')
-          );
-        })
-        .catch(() => {
+      db.collection('atividades').doc(atividadeFinal.id.toString()).set(atividadeFinal).then(() => {
+          
+          // 🚀 ESPIÃO: REGISTRA A ATIVIDADE CRIADA PELO ADMIN
+          if (window.registrarAcao) {
+              window.registrarAcao(currentUser.id, currentUser.companyId, currentUser.name, 'CRIAR_ATIVIDADE', `Registrou a atividade: ${atividadeFinal.title}`);
+          }
+
+          showAdminSection('dashboard').then(() => showToast('Atividade registrada!'));
+        }).catch(() => {
           btn.innerHTML = originalText;
           btn.disabled = false;
           showToast('Erro ao salvar!', 'error');
@@ -696,18 +707,14 @@ function setupAdminNewTaskForm() {
     };
 
     if (arquivosSelecionados.length > 0) {
-      btn.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> A Processar Anexos...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A Processar Anexos...';
       const promessasDeArquivos = arquivosSelecionados.map((file) => {
         return new Promise((resolve) => {
           const reader = new FileReader();
-          reader.onload = function (evento) {
-            resolve({ name: file.name, url: evento.target.result });
-          };
+          reader.onload = function (evento) { resolve({ name: file.name, url: evento.target.result }); };
           reader.readAsDataURL(file);
         });
       });
-
       Promise.all(promessasDeArquivos).then((anexosProntos) => {
         novaAtividade.attachments = anexosProntos;
         salvarNoBanco(novaAtividade);
@@ -1022,9 +1029,7 @@ function setupAdminDelegarForm() {
       e.preventDefault();
       
       const checkboxes = novoForm.querySelectorAll('input[name="funcDelegado"]:checked');
-      if (checkboxes.length === 0) {
-          return showToast('Selecione pelo menos um funcionário!', 'error');
-      }
+      if (checkboxes.length === 0) return showToast('Selecione pelo menos um funcionário!', 'error');
 
       const btn = novoForm.querySelector('button[type="submit"]');
       const originalText = btn.innerHTML;
@@ -1033,7 +1038,7 @@ function setupAdminDelegarForm() {
 
       const titulo = document.getElementById('delegarTitulo').value;
       const descricao = document.getElementById('delegarDescricao').value;
-      const categoria = document.getElementById('delegarCategoria').value; // <-- CAPTURA A CATEGORIA
+      const categoria = document.getElementById('delegarCategoria').value;
       const dataAtual = new Date().toISOString();
 
       const dispararTarefas = (anexosProntos) => {
@@ -1050,7 +1055,7 @@ function setupAdminDelegarForm() {
                   userId: userId,
                   title: titulo,
                   description: descricao,
-                  category: categoria, // <-- SALVA A CATEGORIA NO BANCO
+                  category: categoria,
                   attachments: anexosProntos || [],
                   status: 'pendente', 
                   createdAt: dataAtual
@@ -1060,6 +1065,12 @@ function setupAdminDelegarForm() {
           });
 
           Promise.all(promessasFirebase).then(() => {
+              
+              // 🚀 ESPIÃO: REGISTRA A TAREFA DELEGADA
+              if (window.registrarAcao) {
+                  window.registrarAcao(currentUser.id, currentUser.companyId, currentUser.name, 'DELEGAR_TAREFA', `Delegou a tarefa: ${titulo}`);
+              }
+
               showToast('Tarefas delegadas com sucesso!');
               novoForm.reset();
               fileListDisplay.innerHTML = ''; 
@@ -1068,7 +1079,6 @@ function setupAdminDelegarForm() {
               btn.disabled = false;
               loadTarefasEnviadas(); 
           }).catch((err) => {
-              console.error(err);
               showToast('Erro ao enviar.', 'error');
               btn.innerHTML = originalText;
               btn.disabled = false;
@@ -1080,13 +1090,10 @@ function setupAdminDelegarForm() {
           const promessasDeArquivos = arquivosSelecionados.map((file) => {
               return new Promise((resolve) => {
                   const reader = new FileReader();
-                  reader.onload = function (evento) {
-                      resolve({ name: file.name, url: evento.target.result });
-                  };
+                  reader.onload = function (evento) { resolve({ name: file.name, url: evento.target.result }); };
                   reader.readAsDataURL(file);
               });
           });
-
           Promise.all(promessasDeArquivos).then((anexos) => dispararTarefas(anexos));
       } else {
           dispararTarefas([]); 
@@ -1255,7 +1262,7 @@ window.aprovarTarefaRevisao = function() {
       
       const novaAtividade = {
           id: Date.now(),
-          tarefaVinculadaId: idTarefa.toString(), // 🔗 AQUI ESTÁ A LIGAÇÃO ENTRE AS DUAS!
+          tarefaVinculadaId: idTarefa.toString(),
           companyId: t.companyId,
           userId: t.userId,
           date: new Date().toISOString().split('T')[0], 
@@ -1269,6 +1276,12 @@ window.aprovarTarefaRevisao = function() {
       const p2 = db.collection('atividades').doc(novaAtividade.id.toString()).set(novaAtividade);
 
       Promise.all([p1, p2]).then(() => {
+          
+          // 🚀 ESPIÃO: REGISTRA A APROVAÇÃO (Ação do Admin)
+          if (window.registrarAcao) {
+              window.registrarAcao(currentUser.id, currentUser.companyId, currentUser.name, 'CRIAR_ATIVIDADE', `Aprovou e concluiu a tarefa: ${novaAtividade.title}`);
+          }
+
           showToast('Tarefa Aprovada com Sucesso!');
           fecharDetalhesTarefa();
           loadTarefasEnviadas();
@@ -1450,4 +1463,112 @@ window.openDelegarTab = function(tabId, btn) {
   if(tabId === 'tabTarefasEnviadas') {
       loadTarefasEnviadas();
   }
+};
+
+// ==========================================
+// SISTEMA DE HISTÓRICO DE ACESSOS (LOGINS)
+// ==========================================
+window.abrirModalAcessos = function(userId) {
+  const u = users.find(x => x.id === userId);
+  if (!u) return;
+  
+  document.getElementById('nomeUsuarioAcesso').textContent = u.name;
+  document.getElementById('userIdAcessoAtual').value = userId;
+  
+  // Define a data de HOJE considerando o fuso horário local
+  const hojeLocal = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+  document.getElementById('filtroDataAcessos').value = hojeLocal;
+  
+  document.getElementById('modalAcessos').classList.remove('hidden');
+  carregarAcessos(userId, hojeLocal);
+};
+
+window.filtrarAcessosPorData = function() {
+  const userId = document.getElementById('userIdAcessoAtual').value;
+  const data = document.getElementById('filtroDataAcessos').value;
+  if(userId) carregarAcessos(parseInt(userId), data);
+};
+
+window.unsubscribeAcessos = null;
+
+window.carregarAcessos = function(userId, dataFiltro) {
+    const container = document.getElementById('listaAcessosUsuario');
+    container.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.6;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando histórico ao vivo...</div>';
+    
+    // Desliga o radar anterior para não misturar dados
+    if (window.unsubscribeAcessos) window.unsubscribeAcessos();
+
+    // 🚀 O RADAR: Escuta as ações em TEMPO REAL
+    window.unsubscribeAcessos = db.collection('acessos')
+      .where('userId', '==', userId)
+      .onSnapshot(snap => {
+          let lista = [];
+          snap.forEach(doc => lista.push(doc.data()));
+          
+          if(dataFiltro) {
+              lista = lista.filter(item => item.timestamp && item.timestamp.startsWith(dataFiltro));
+          }
+
+          if (lista.length === 0) {
+              container.innerHTML = `<div style="text-align:center; background: var(--color-bg-primary); padding: 20px; border-radius: 8px; border: 1px dashed var(--color-border); color: var(--color-text-secondary);"><i class="fa-solid fa-calendar-xmark" style="font-size: 24px; margin-bottom: 10px;"></i><br>Nenhuma atividade registrada neste dia.</div>`;
+              return;
+          }
+          
+          lista.sort((a, b) => {
+              const tA = a.timestamp || "";
+              const tB = b.timestamp || "";
+              return tB.localeCompare(tA);
+          });
+
+          const icones = {
+              'LOGIN': { icon: 'fa-right-to-bracket', cor: 'var(--color-success)' },
+              'CRIAR_ATIVIDADE': { icon: 'fa-plus', cor: 'var(--color-primary)' },
+              'ENTREGAR_TAREFA': { icon: 'fa-paper-plane', cor: 'var(--color-info)' },
+              'DELEGAR_TAREFA': { icon: 'fa-bullseye', cor: 'var(--color-warning)' },
+              'EDITAR_ATIVIDADE': { icon: 'fa-pen', cor: 'var(--color-info)' },
+              'EXCLUIR_ATIVIDADE': { icon: 'fa-trash', cor: 'var(--color-danger)' },
+              'DEFAULT': { icon: 'fa-bolt', cor: 'var(--color-warning)' }
+          };
+
+          let html = '';
+          lista.forEach(data => {
+              let horaFormatada = "--:--";
+              if (data.timestamp && data.timestamp.includes('T')) {
+                  horaFormatada = data.timestamp.split('T')[1].substring(0, 5);
+              }
+              
+              const tipoAcao = data.acao || 'LOGIN';
+              const visual = icones[tipoAcao] || icones['DEFAULT'];
+              const textoDetalhe = data.detalhes || 'Acesso registrado';
+              
+              html += `
+              <div style="background: var(--color-bg-primary); border: 1px solid var(--color-border); padding: 12px 15px; border-radius: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; color: var(--color-text-primary);">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                      <div style="display: flex; align-items: center; gap: 10px; line-height: 1.3;">
+                          <i class="fa-solid ${visual.icon}" style="color: ${visual.cor}; font-size: 16px; min-width: 16px; text-align: center;"></i> 
+                          <strong>${textoDetalhe}</strong>
+                      </div>
+                      <span style="font-size: 11px; font-weight: bold; opacity: 0.6; white-space: nowrap;">${horaFormatada}</span>
+                  </div>
+              </div>`;
+          });
+          container.innerHTML = html;
+      });
+};
+
+window.fecharModalAcessos = function() {
+    document.getElementById('modalAcessos').classList.add('hidden');
+    // Desliga o radar ao fechar a janela para economizar internet/banco
+    if (window.unsubscribeAcessos) {
+        window.unsubscribeAcessos();
+        window.unsubscribeAcessos = null;
+    }
+};
+
+window.fecharModalAcessos = function() {
+  document.getElementById('modalAcessos').classList.add('hidden');
+};
+
+window.fecharModalAcessos = function() {
+  document.getElementById('modalAcessos').classList.add('hidden');
 };

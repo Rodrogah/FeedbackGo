@@ -87,17 +87,56 @@ document
       });
   });
 
-document.getElementById('loginForm').addEventListener('submit', function (e) {
-  e.preventDefault();
-  const em = document.getElementById('loginEmail').value.trim();
-  const pw = document.getElementById('loginPassword').value;
-  const u = users.find((u) => u.email === em && u.password === pw && u.active);
-  if (u) {
-    currentUser = u;
-    localStorage.setItem('feedbackgo_logged_user', u.id);
-    showPanel(u.role);
-  } else showNotice('loginAlert', 'Credenciais inválidas.', 'error');
-});
+  document.getElementById('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const em = document.getElementById('loginEmail').value.trim();
+    const pw = document.getElementById('loginPassword').value;
+    const u = users.find((u) => u.email === em && u.password === pw && u.active);
+    
+    if (u) {
+        currentUser = u;
+        localStorage.setItem('feedbackgo_logged_user', u.id);
+        
+        // Marca como ONLINE
+        db.collection('usuarios').doc(u.id.toString()).update({ isOnline: true });
+        
+        // Pega a data e hora exata do Brasil (Fuso Local)
+        const dataLocal = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString();
+        
+        // Salva o login MANUAL diretamente
+        db.collection('acessos').add({
+            userId: u.id,
+            companyId: u.companyId,
+            userName: u.name,
+            acao: 'LOGIN',
+            detalhes: 'Fez login no sistema',
+            timestamp: dataLocal
+        });
+  
+        // 🔒 Trava a sessão para não duplicar se ele der F5 depois de logar
+        sessionStorage.setItem('sessao_registrada', 'sim');
+  
+        showPanel(u.role);
+    } else {
+        showNotice('loginAlert', 'Credenciais inválidas.', 'error');
+    }
+  });
+  
+  window.logout = function() {
+    if (currentUser) {
+        // Apaga a bolinha verde de Online no banco de dados
+        db.collection('usuarios').doc(currentUser.id.toString()).update({ isOnline: false }).catch(()=>{});
+    }
+    
+    // Limpa o usuário da memória
+    currentUser = null;
+    localStorage.removeItem('feedbackgo_logged_user');
+    sessionStorage.removeItem('sessao_registrada'); 
+    
+    // O truque de mestre: recarrega a página inteira. 
+    // Isso desliga todos os radares ao vivo, limpa o cache da tela e mostra o login perfeitamente!
+    window.location.reload();
+};
 
 document.getElementById('recoverForm').addEventListener('submit', function (e) {
   e.preventDefault();
@@ -170,14 +209,7 @@ function showRecoverScreen() {
   );
   document.getElementById('recoverScreen').classList.remove('hidden');
 }
-function logout() {
-  currentUser = null;
-  localStorage.removeItem('feedbackgo_logged_user');
-  ['adminPanel', 'employeePanel'].forEach((id) =>
-    document.getElementById(id).classList.add('hidden')
-  );
-  showLoginScreen();
-}
+
 function showPanel(role) {
   document.getElementById('loginScreen').classList.add('hidden');
   if (role === 'admin') {

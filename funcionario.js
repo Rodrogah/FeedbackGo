@@ -278,6 +278,12 @@ function setupNewTaskForm() {
         .doc(atividadeFinal.id.toString())
         .set(atividadeFinal)
         .then(() => {
+            
+          // 🚀 ESPIÃO: REGISTRA A CRIAÇÃO DA ATIVIDADE DO FUNCIONÁRIO
+          if (window.registrarAcao) {
+              window.registrarAcao(currentUser.id, currentUser.companyId, currentUser.name, 'CRIAR_ATIVIDADE', `Registrou a atividade: ${atividadeFinal.title}`);
+          }
+
           showEmployeeSection('dashboard').then(() =>
             showToast('Atividade registrada!')
           );
@@ -470,7 +476,13 @@ window.setupFuncionarioTarefas = function() {
               tituloEntrega: tituloFinal,
               attachments: anexosNovos 
           }).then(() => {
-              showToast('Entregue! Aguardando revisão do administrador.');
+              
+              // 🚀 ESPIÃO: REGISTRA A ENTREGA DA TAREFA
+              if (window.registrarAcao) {
+                  window.registrarAcao(currentUser.id, currentUser.companyId, currentUser.name, 'ENTREGAR_TAREFA', `Enviou a tarefa para revisão: ${tituloFinal}`);
+              }
+
+              showToast('Entregue! Aguardando avaliação.');
               fecharModalTarefa();
               fileListDisplay.innerHTML = '';
               arquivosSelecionados = [];
@@ -478,7 +490,6 @@ window.setupFuncionarioTarefas = function() {
               btn.disabled = false;
               loadTarefasRecebidas(); 
           }).catch(err => {
-              console.error(err);
               showToast('Erro ao entregar.', 'error');
               btn.innerHTML = originalText;
               btn.disabled = false;
