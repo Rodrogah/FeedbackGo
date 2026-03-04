@@ -2214,3 +2214,157 @@ body.dark-mode input[type="checkbox"] {
   accent-color: #10b981; /* Deixa o visto (check) verde ao clicar */
   cursor: pointer;
 }
+
+/* ======================================================= */
+/* CALENDÁRIOS PREMIUM (FLATPICKR) - LISTA E POSIÇÃO       */
+/* ======================================================= */
+
+/* 1. Esconde resquícios do calendário antigo do navegador */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-inner-spin-button {
+    display: none;
+    opacity: 0;
+}
+
+/* 2. Base do Calendário */
+.flatpickr-calendar {
+    font-family: inherit !important;
+    border-radius: 12px !important;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15) !important;
+    border: none !important;
+    padding: 0 !important; 
+}
+
+/* 🚀 NOVO: Joga o calendário um pouco mais para cima ao abrir */
+.flatpickr-calendar.open {
+    margin-top: -12px !important; 
+}
+
+/* 3. BLINDAGEM DO CABEÇALHO (Mês e Ano em formato interativo) */
+.flatpickr-months {
+    padding-top: 15px !important;
+    padding-bottom: 5px !important;
+}
+
+/* 🚀 NOVO: O Mês (Transformado visualmente numa lista/dropdown) */
+.flatpickr-calendar .flatpickr-monthDropdown-months {
+    background: transparent !important;
+    border: none !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    padding: 0 20px 0 5px !important; /* Espaço para a setinha */
+    margin-right: 10px !important;
+    cursor: pointer !important;
+    outline: none !important;
+    color: var(--color-text-primary) !important;
+    
+    /* Cria uma setinha "v" limpa e profissional */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right center !important;
+    background-size: 14px !important;
+}
+
+/* 🚀 NOVO: O Ano (Com setinhas visíveis para subir/descer) */
+.flatpickr-calendar input.cur-year {
+    background: transparent !important;
+    border: none !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    outline: none !important;
+    cursor: pointer !important;
+    color: var(--color-text-primary) !important;
+}
+
+/* Revela as setinhas de subir/descer do Ano ao lado do número */
+.flatpickr-calendar .numInputWrapper span {
+    display: block !important;
+    opacity: 0.4 !important;
+    border: none !important;
+}
+.flatpickr-calendar .numInputWrapper span:hover {
+    background: rgba(16, 185, 129, 0.2) !important;
+    opacity: 1 !important;
+}
+
+/* Efeito Hover (Fica Verde) no mês e setas de passar o mês */
+.flatpickr-calendar .flatpickr-monthDropdown-months:hover,
+.flatpickr-calendar input.cur-year:hover,
+.flatpickr-months .flatpickr-prev-month:hover svg, 
+.flatpickr-months .flatpickr-next-month:hover svg {
+    color: var(--color-primary) !important;
+    fill: var(--color-primary) !important;
+}
+
+/* 4. DESIGN DOS DIAS */
+.flatpickr-day.selected, 
+.flatpickr-day.startRange, 
+.flatpickr-day.endRange {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: white !important;
+}
+.flatpickr-day.today {
+    border-color: var(--color-primary) !important;
+    font-weight: 800;
+}
+body.dark-mode .flatpickr-day.today {
+    border-color: var(--color-primary) !important;
+}
+.flatpickr-day {
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+}
+
+/* 5. MODO ESCURO (ADAPTAÇÃO) */
+body.dark-mode .flatpickr-calendar {
+    background: #1e293b !important; 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5) !important;
+    border: 1px solid #334155 !important;
+}
+
+/* Textos Claros */
+body.dark-mode .flatpickr-day,
+body.dark-mode .flatpickr-month, 
+body.dark-mode .flatpickr-current-month,
+body.dark-mode .flatpickr-weekday,
+body.dark-mode .flatpickr-calendar .flatpickr-monthDropdown-months,
+body.dark-mode .flatpickr-calendar input.cur-year {
+    color: #f8fafc !important; 
+}
+
+/* Setinha do Mês pintada de branco no modo escuro */
+body.dark-mode .flatpickr-calendar .flatpickr-monthDropdown-months {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f8fafc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+}
+
+/* Setinhas normais de passar o mês (Brancas no escuro) */
+body.dark-mode .flatpickr-months .flatpickr-prev-month svg, 
+body.dark-mode .flatpickr-months .flatpickr-next-month svg {
+    fill: #f8fafc !important;
+}
+
+/* Hover nos dias */
+body.dark-mode .flatpickr-day:hover:not(.selected) {
+    background: rgba(16, 185, 129, 0.15) !important; 
+    color: var(--color-primary) !important; 
+    border-color: transparent !important;
+}
+
+/* Dias fora do mês */
+body.dark-mode .flatpickr-day.flatpickr-disabled,
+body.dark-mode .flatpickr-day.prevMonthDay, 
+body.dark-mode .flatpickr-day.nextMonthDay {
+    color: #475569 !important;
+}
+
+/* O fundo da listinha do mês no Modo Escuro */
+body.dark-mode .flatpickr-monthDropdown-months option {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+}

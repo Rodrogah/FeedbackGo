@@ -1011,3 +1011,25 @@ window.registrarAcao = function(userId, companyId, userName, acao, detalhes) {
       db.collection('usuarios').doc(userId.toString()).update({ isOnline: true }).catch(()=>{});
   }).catch(err => console.error("Erro ao registrar ação:", err));
 };
+
+// =======================================================
+// INICIALIZADOR AUTOMÁTICO DE CALENDÁRIOS PREMIUM
+// =======================================================
+const observerCalendario = new MutationObserver(() => {
+  if (typeof flatpickr !== 'undefined') {
+      const datas = document.querySelectorAll('input[type="date"]:not(.flatpickr-input)');
+      if (datas.length > 0) {
+          flatpickr(datas, {
+              locale: "pt", 
+              altInput: true,         // MÁGICA: Cria uma máscara visual amigável
+              altFormat: "d/m/Y",     // O QUE O USUÁRIO VÊ: Padrão Brasileiro (18/03/2026)
+              dateFormat: "Y-m-d",    // O QUE O SISTEMA LÊ: Padrão Banco de Dados (2026-03-18)
+              disableMobile: true     // No celular, usa o calendário nativo (que já é BR por padrão)
+          });
+      }
+  }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  observerCalendario.observe(document.body, { childList: true, subtree: true });
+});

@@ -1071,7 +1071,7 @@ function setupAdminDelegarForm() {
                   window.registrarAcao(currentUser.id, currentUser.companyId, currentUser.name, 'DELEGAR_TAREFA', `Delegou a tarefa: ${titulo}`);
               }
 
-              showToast('Tarefas delegadas com sucesso!');
+              showToast('Tarefas enviadas com sucesso!');
               novoForm.reset();
               fileListDisplay.innerHTML = ''; 
               arquivosSelecionados = []; 
